@@ -2,7 +2,6 @@
 # Examples: https://albumentations.ai/docs/getting_started/bounding_boxes_augmentation/
 
 import albumentations as A
-import cv2
 
 def get_transformation(format:str = "coco") -> A.Compose:
     """
@@ -18,7 +17,3 @@ def get_transformation(format:str = "coco") -> A.Compose:
         ], 
         bbox_params=A.BboxParams(format = format))
     return transform
-
-if __name__ == "__main__":
-    output = get_transformation()
-    print(output)
