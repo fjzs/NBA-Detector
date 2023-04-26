@@ -1,5 +1,5 @@
 import albumentations as A
-from nba_detector.transformations import get_transformation
+from src.nba_detector.transformations import get_transformation
 import pytest
 
 def test_get_transformation_bad_format():
