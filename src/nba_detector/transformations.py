@@ -4,9 +4,10 @@
 import albumentations as A
 import cv2
 
-def get_transform(format:str = "coco") -> A.Compose:
+def get_transformation(format:str = "coco") -> A.Compose:
     """
     Retrieves an example of a transformation
+    - format (str): any of ["pascal_voc", "albumentations", "coco", "yolo"]
     """
     if format not in ["pascal_voc", "albumentations", "coco", "yolo"]:
         raise ValueError(f"Format not recognized, it was sent {format}")
@@ -18,3 +19,6 @@ def get_transform(format:str = "coco") -> A.Compose:
         bbox_params=A.BboxParams(format = format))
     return transform
 
+if __name__ == "__main__":
+    output = get_transformation()
+    print(output)
