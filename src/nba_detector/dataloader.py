@@ -1,5 +1,4 @@
 import os
-from roboflow import Roboflow
 import torch
 import torchvision
 
@@ -7,10 +6,6 @@ from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from pycocotools.coco import COCO
-
-rf = Roboflow(api_key="NASBxoDeYCFInyN1wXD2")
-project = rf.workspace("francisco-zenteno-uryfd").project("nba-player-detector")
-dataset = project.version(1).download("coco")
 
 
 def load_data(folder_name: str, width: int, height: int, batch_size: int):
