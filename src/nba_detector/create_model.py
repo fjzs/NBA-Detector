@@ -19,6 +19,8 @@ def get_model(model_name:str, num_classes:int, trainable_backbone_layers:int=3) 
         torch.nn.Module: torch model
     """
     available_models = ["fasterrcnn"]
+    if (model_name is None) or (num_classes is None) or (trainable_backbone_layers is None):
+        raise ValueError("Cannot receive an input as None type")
     if model_name not in available_models:
         raise ValueError(f"{model_name} not recognized, available models are: {available_models}")
     if num_classes <= 1:

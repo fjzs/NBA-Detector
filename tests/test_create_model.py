@@ -1,18 +1,16 @@
 from src.nba_detector.create_model import get_model
 import torch
+from torchvision.models.detection.faster_rcnn import FasterRCNN
 import pytest
 
 
-def test_get_model_good_input():
-    model_names = ["fasterrcnn"]
+def test_get_model_fasterrcnn():
     num_classes = [2]
     trainable_layers = [1]
-    for m in model_names:
-        for n in num_classes:
-            for t in trainable_layers:
-                model = get_model(m,n,t)
-                assert (type(model) == torch.nn.Module)
-
+    for n in num_classes:
+        for t in trainable_layers:
+            model = get_model("fasterrcnn", n, t)
+            assert (type(model) == FasterRCNN)
 
 def test_get_model_bad_name():
     bad_model_name = "Fasterrcnn"
