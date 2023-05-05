@@ -1,5 +1,5 @@
 from src.nba_detector.transformations import get_transformation
-from src.nba_detector.dataloader import load_data
+from nba_detector.dataset import load_data
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
