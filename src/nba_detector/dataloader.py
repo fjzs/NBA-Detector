@@ -4,23 +4,22 @@ from collections import defaultdict
 from collections.abc import Callable
 from typing import Tuple, List
 
-from torchvision.models.detection.faster_rcnn import Any
-from torchvision.models.mobilenetv2 import Optional
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
+from torchvision.datasets.coco import Optional
 import torchvision.datasets as datasets
 from pycocotools.coco import COCO
 
 from roboflow import Roboflow
 
-api_key = os.environ['ROBOFLOW_KEY']
+api_key = os.getenv('ROBOFLOW_KEY')
 rf = Roboflow(api_key=api_key)
-project = rf.workspace("francisco-zenteno-uryfd").project("nba-player-detector")
+project = rf.workspace(
+    "francisco-zenteno-uryfd").project("nba-player-detector")
 dataset = project.version(1).download("coco")
 
 
 class BasketballDataset(datasets.CocoDetection):
-    # Creating key constants
     BBOX_KEY: str = 'bbox'
     BOXES_KEY: str = 'boxes'
     CATEGORY_ID_KEY: str = 'category_id'
@@ -29,24 +28,24 @@ class BasketballDataset(datasets.CocoDetection):
 
     def __init__(self, root: str, annFile: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, transforms: Optional[Callable] = None) -> None:
         super().__init__(root, annFile, transform, target_transform, transforms)
-        # Loading annotations file
         ann = json.load(open(annFile, 'r'))
         self.file_names: List[str] = []
-        # Reading filenames from annotations file
         if BasketballDataset.IMAGES_KEY in ann:
             for image in ann[BasketballDataset.IMAGES_KEY]:
                 if 'file_name' in image:
                     self.file_names.append(image['file_name'])
 
-    def __getitem__(self, index: int) -> Tuple[Any, defaultdict(list), str]:
+    def __getitem__(self, index: int) -> Tuple[any, defaultdict[list], str]:
         img, label = super().__getitem__(index)
-        # Modifying return type so that target is dictionary of list data and filename is returned with the data
+
         modified_target = defaultdict(list)
         for ann in label:
             if BasketballDataset.BBOX_KEY in ann:
-                modified_target[BasketballDataset.BOXES_KEY].append(ann[BasketballDataset.BBOX_KEY])
+                modified_target[BasketballDataset.BOXES_KEY].append(
+                    ann[BasketballDataset.BBOX_KEY])
             if BasketballDataset.CATEGORY_ID_KEY in ann:
-                modified_target[BasketballDataset.LABELS_KEY].append(ann[BasketballDataset.CATEGORY_ID_KEY])
+                modified_target[BasketballDataset.LABELS_KEY].append(
+                    ann[BasketballDataset.CATEGORY_ID_KEY])
         return img, modified_target, self.file_names[index]
 
 
@@ -70,7 +69,8 @@ def load_data(folder_name: str, width: int, height: int, batch_size: int):
         List of DataLoader object containing train, validation and test dataloader objects
     """
     assert os.path.isdir(folder_name), "Given path does not exist"
-    assert set({'train', 'test', 'valid'}).issubset(set(os.listdir(folder_name))), "train, test, valid folders not present in path"
+    assert set({'train', 'test', 'valid'}).issubset(
+        set(os.listdir(folder_name))), "train, test, valid folders not present in path"
 
     # Create folder paths
     TRAIN_FOLDER: str = folder_name + '/train'
@@ -86,8 +86,10 @@ def load_data(folder_name: str, width: int, height: int, batch_size: int):
     val_ann_file = VALID_FOLDER + '/_annotations.coco.json'
     test_ann_file = TEST_FOLDER + '/_annotations.coco.json'
 
-    assert os.path.isfile(train_ann_file), "No annotations file in train folder"
-    assert os.path.isfile(val_ann_file), "No annotations file in validation folder"
+    assert os.path.isfile(
+        train_ann_file), "No annotations file in train folder"
+    assert os.path.isfile(
+        val_ann_file), "No annotations file in validation folder"
     assert os.path.isfile(test_ann_file), "No annotations file in test folder"
 
     assert type(width) is int, "width is not an integer"
@@ -110,12 +112,12 @@ def load_data(folder_name: str, width: int, height: int, batch_size: int):
                                      transform=transform)
 
     # Create DataLoader objects
-    trainloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    trainloader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True)
     valloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     return trainloader, valloader, testloader
-
 
 # Example of function call
 # trainloader, valloader, testloader = load_data('/content/NBA-Player-Detector-1/', 224, 224, 4)
