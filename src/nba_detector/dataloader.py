@@ -4,6 +4,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from typing import Tuple, List
 
+import torch
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as transforms
 from torchvision.datasets.coco import Optional
@@ -36,7 +37,7 @@ class BasketballDataset(datasets.CocoDetection):
                 if 'file_name' in image:
                     self.file_names.append(image['file_name'])
 
-    def __getitem__(self, index: int) -> Tuple[any, defaultdict[list], str]:
+    def __getitem__(self, index: int) -> Tuple[any, defaultdict[torch.Tensor], str]:
         img, label = super().__getitem__(index)
 
         modified_target = defaultdict(list)
@@ -47,6 +48,10 @@ class BasketballDataset(datasets.CocoDetection):
             if BasketballDataset.CATEGORY_ID_KEY in ann:
                 modified_target[BasketballDataset.LABELS_KEY].append(
                     ann[BasketballDataset.CATEGORY_ID_KEY])
+        modified_target[BasketballDataset.BOXES_KEY] = torch.Tensor(
+            modified_target[BasketballDataset.BOXES_KEY])
+        modified_target[BasketballDataset.LABELS_KEY] = torch.LongTensor(
+            modified_target[BasketballDataset.LABELS_KEY])
         modified_target[BasketballDataset.FILEPATH_KEY] = self.file_names[index]
         return img, modified_target
 
@@ -114,12 +119,13 @@ def load_data(folder_name: str, width: int, height: int, batch_size: int):
                                      transform=transform)
 
     # Create DataLoader objects
-    trainloader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True)
-    valloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    # trainloader = DataLoader(
+    #     train_dataset, batch_size=batch_size, shuffle=True)
+    # valloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    # testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    return trainloader, valloader, testloader
+    return train_dataset, val_dataset, test_dataset
+
 
 # Example of function call
 # trainloader, valloader, testloader = load_data('/content/NBA-Player-Detector-1/', 224, 224, 4)
