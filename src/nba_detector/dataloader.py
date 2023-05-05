@@ -25,6 +25,7 @@ class BasketballDataset(datasets.CocoDetection):
     CATEGORY_ID_KEY: str = 'category_id'
     LABELS_KEY: str = 'labels'
     IMAGES_KEY: str = 'images'
+    FILEPATH_KEY: str = 'filepath'
 
     def __init__(self, root: str, annFile: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, transforms: Optional[Callable] = None) -> None:
         super().__init__(root, annFile, transform, target_transform, transforms)
@@ -46,7 +47,8 @@ class BasketballDataset(datasets.CocoDetection):
             if BasketballDataset.CATEGORY_ID_KEY in ann:
                 modified_target[BasketballDataset.LABELS_KEY].append(
                     ann[BasketballDataset.CATEGORY_ID_KEY])
-        return img, modified_target, self.file_names[index]
+        modified_target[BasketballDataset.FILEPATH_KEY] = self.file_names[index]
+        return img, modified_target
 
 
 def load_data(folder_name: str, width: int, height: int, batch_size: int):
