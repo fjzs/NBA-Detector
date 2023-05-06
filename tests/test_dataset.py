@@ -1,10 +1,11 @@
 from src.nba_detector.transformations import get_transformation
-from src.nba_detector.dataset import load_data
+from src.nba_detector.dataset import load_data, download_dataset_from_roboflow
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
 
 def test_get_dataset():
+    download_dataset_from_roboflow()
     train_dataset, val_dataset, test_dataset = load_data(
         '/NBA-Player-Detector-1/', transforms.Compose([transforms.ToTensor()]))
 
@@ -14,6 +15,7 @@ def test_get_dataset():
 
 
 def test_make_dataloader():
+    download_dataset_from_roboflow()
     train_dataset, val_dataset, test_dataset = load_data(
         '/NBA-Player-Detector-1/', transforms.Compose([transforms.ToTensor()]))
     trainloader = DataLoader(train_dataset, batch_size=4, shuffle=True)

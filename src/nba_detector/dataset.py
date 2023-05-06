@@ -11,10 +11,11 @@ import torchvision.datasets as datasets
 
 from roboflow import Roboflow
 
-rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
-project = rf.workspace(
-    "francisco-zenteno-uryfd").project("nba-player-detector")
-dataset = project.version(1).download("coco")
+def download_dataset_from_roboflow() -> None:
+    rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
+    project = rf.workspace(
+        "francisco-zenteno-uryfd").project("nba-player-detector")
+    dataset = project.version(1).download("coco")
 
 
 class BasketballDataset(datasets.CocoDetection):
