@@ -1,47 +1,83 @@
 import os
-import json
+import xml.etree.ElementTree as ET
+from PIL import Image
+
 from collections import defaultdict
-from collections.abc import Callable
 from typing import Tuple, List
 
-import torch
+from torch import Tensor, LongTensor
+from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-from torchvision.datasets.coco import Optional
-import torchvision.datasets as datasets
+import torchvision.transforms.functional as TF
 
 from roboflow import Roboflow
 
-def download_dataset_from_roboflow() -> None:
+
+def download_dataset_from_roboflow(format: str = 'voc') -> None:
+    """Download the dataset from Roboflow website using API call
+
+        Parameters
+        ----------
+        format : str
+            Format of the dataset to be downloaded
+
+        Returns
+        -------
+        dataset : Dataset
+        """
     rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project = rf.workspace(
         "francisco-zenteno-uryfd").project("nba-player-detector")
-    dataset = project.version(1).download("coco")
+    project.version(1).download(format)
 
 
-class BasketballDataset(datasets.CocoDetection):
-    # Keys from default Cocodetection module in labels variable
-    IMAGES_KEY: str = 'images'
-    BBOX_KEY: str = 'bbox'
-    CATEGORY_ID_KEY: str = 'category_id'
+class BasketballDataset(Dataset):
+    # File extensions
+    XML_EXTENSION = '.xml'
+    JPG_EXTENSION = '.jpg'
     # Keys defined for labels to be provided to the custom model
     BOXES_KEY: str = 'boxes'
     LABELS_KEY: str = 'labels'
     FILEPATH_KEY: str = 'filepath'
+    # Labels to map detection objects to numbers
+    LABEL_MAP: defaultdict(int) = {'ball': 1, 'player': 2, 'rim': 3}
 
-    def __init__(self, root: str, annFile: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, transforms: Optional[Callable] = None) -> None:
-        """Modified to store filepath of each image file. This will be required during testing and individual image evaluation to pinpoint issues.
+    def __init__(self, root_dir: str, transform: transforms = transforms.Compose([transforms.ToTensor()]), image_set: str = 'train') -> None:
+        super().__init__()
+        self.root_dir = root_dir
+        self.transform = transform
+        self.image_set = image_set
+        self.image_ids: List[str] = self._get_image_ids()
+
+    def __len__(self) -> int:
+        """Returns count of dataset items
+
+        Returns
+        -------
+        length : int
+            Count of dataset items
         """
-        super().__init__(root, annFile, transform, target_transform, transforms)
-        # Read the annotations file as a json object
-        ann: json = json.load(open(annFile, 'r'))
-        self.file_names: List[str] = []
-        # Append filepath of all images into filenames list
-        if BasketballDataset.IMAGES_KEY in ann:
-            for image in ann[BasketballDataset.IMAGES_KEY]:
-                if 'file_name' in image:
-                    self.file_names.append(image['file_name'])
+        return self.image_ids.__len__()
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, defaultdict[torch.Tensor]]:
+    def _get_image_ids(self) -> List[str]:
+        """Iterate over the image set in the root folder to identify and list image and data files for the dataset
+
+        Returns
+        -------
+        image_ids : list[str]
+            List of ids made using the XML filename after removing extension
+        """
+        folder_path = os.path.join(self.root_dir, self.image_set)
+        image_ids: List[str] = []
+        for xml_file in os.listdir(folder_path):
+            full_xml_path = os.path.join(folder_path, xml_file)
+            if full_xml_path.endswith(BasketballDataset.XML_EXTENSION) and \
+                    os.path.isfile(full_xml_path.replace(BasketballDataset.XML_EXTENSION, BasketballDataset.JPG_EXTENSION)):
+                image_ids.append(os.path.join(
+                    full_xml_path.removesuffix(BasketballDataset.XML_EXTENSION)))
+        return image_ids
+
+    def __getitem__(self, index) -> Tuple[Tensor, defaultdict[Tensor]]:
         """Returns the item at given index in the dataset
 
         Parameters
@@ -51,42 +87,70 @@ class BasketballDataset(datasets.CocoDetection):
 
         Returns
         -------
-        image : torch.Tensor
+        image : Tensor
             Image at given index in the dataset as a Tensor
-        modified_target : defaultdict[torch.Tensor]
+        target : defaultdict[Tensor]
             Dictionary containing keys boxes, labels, filepath. Value corresponding to boxes is of the form torch.Tensor[torch.Tensor], 
             each containing bounding box coordinates in the form of [x0, y0, x1, y1], labels is of the form torch.Tensor, each value
-            corresponding to category_id in the dataset, and filename is of the form str, specifying filepath of the original image.
+            corresponding to an integer defined by LABEL_MAP constant, and filename is of the form str, specifying filepath of the original image.
         """
-        image, label = super().__getitem__(index)
 
-        modified_target = defaultdict(list)
-        # Iterate over all labels
-        for ann in label:
-            if BasketballDataset.BBOX_KEY in ann:
-                # Modify [x0, y0, w, h] format of coco dataset to [x0, y0, x1, y1] for PascalVOC
-                ann[BasketballDataset.BBOX_KEY][2] += ann[BasketballDataset.BBOX_KEY][0]
-                ann[BasketballDataset.BBOX_KEY][3] += ann[BasketballDataset.BBOX_KEY][1]
-                # Append data to box key in target dictionary
-                modified_target[BasketballDataset.BOXES_KEY].append(
-                    ann[BasketballDataset.BBOX_KEY])
-            if BasketballDataset.CATEGORY_ID_KEY in ann:
-                # Append data to labels key in target dictionary
-                modified_target[BasketballDataset.LABELS_KEY].append(
-                    ann[BasketballDataset.CATEGORY_ID_KEY])
+        img_path = self.image_ids[index] + BasketballDataset.JPG_EXTENSION
+        ann_path = self.image_ids[index] + BasketballDataset.XML_EXTENSION
+        image = Image.open(img_path).convert('RGB')
+        targets = self._get_annotations(ann_path)
+        if self.transform:
+            targets[BasketballDataset.BOXES_KEY] = TF.resize
+            image = self.transform(image)
+        return image, targets
 
-        # Convert lists to torch tensors
-        modified_target[BasketballDataset.BOXES_KEY] = torch.Tensor(
-            modified_target[BasketballDataset.BOXES_KEY])
-        modified_target[BasketballDataset.LABELS_KEY] = torch.LongTensor(
-            modified_target[BasketballDataset.LABELS_KEY])
-        # Add filename to target dictionary
-        modified_target[BasketballDataset.FILEPATH_KEY] = self.file_names[index]
+    def _get_annotations(self, xml_file_path: str) -> defaultdict[Tensor]:
+        """Define format of annotations for the dataset from a given file
 
-        return image, modified_target
+        Parameters
+        ----------
+        xml_file_path : str
+            Path to the XML file corresponding to a valid image and id
+
+        Returns
+        -------
+        targets : defaultdict[Tensor]
+            Dictionary containing keys boxes, labels, filepath. Value corresponding to boxes is of the form torch.Tensor[torch.Tensor], 
+            each containing bounding box coordinates in the form of [x0, y0, x1, y1], labels is of the form torch.Tensor, each value
+            corresponding to an integer defined by LABEL_MAP constant, and filename is of the form str, specifying filepath of the original image.
+        """
+        # Initialize targets
+        targets = defaultdict(list)
+        # Parse XML file
+        tree = ET.parse(xml_file_path)
+        # Obtain root of the file
+        root = tree.getroot()
+        # Iterate over each object in the file and access required keys
+        for obj in root.findall('object'):
+            bbox = obj.find('bndbox')
+            xmin = float(bbox.find('xmin').text)
+            ymin = float(bbox.find('ymin').text)
+            xmax = float(bbox.find('xmax').text)
+            ymax = float(bbox.find('ymax').text)
+            label = obj.find('name').text.lower().strip()
+            # Store data in required format in targets
+            targets[BasketballDataset.BOXES_KEY].append(
+                [xmin, ymin, xmax, ymax])
+            targets[BasketballDataset.LABELS_KEY].append(
+                BasketballDataset.LABEL_MAP[label])
+
+        # Convert lists to Tensors
+        targets[BasketballDataset.BOXES_KEY] = Tensor(
+            targets[BasketballDataset.BOXES_KEY])
+        targets[BasketballDataset.LABELS_KEY] = LongTensor(
+            targets[BasketballDataset.LABELS_KEY])
+        # Store file path
+        targets[BasketballDataset.FILEPATH_KEY] = xml_file_path.removesuffix(
+            BasketballDataset.XML_EXTENSION)
+        return targets
 
 
-def load_data(folder_name: str, transform: transforms):
+def load_data(folder_name: str, transform: transforms, dataset_type: str = 'voc'):
     """Load the dataset from specified folder
 
     Parameters
@@ -101,6 +165,7 @@ def load_data(folder_name: str, transform: transforms):
     tuple[BasketballDataset]
         List of Dataset object containing train, validation and test dataloader objects
     """
+    os.listdir(folder_name)
     assert os.path.isdir(folder_name), "Given path does not exist"
     assert set({'train', 'test', 'valid'}).issubset(
         set(os.listdir(folder_name))), "train, test, valid folders not present in path"
@@ -114,31 +179,22 @@ def load_data(folder_name: str, transform: transforms):
     assert os.path.isdir(VALID_FOLDER), "No folder named valid"
     assert os.path.isdir(TEST_FOLDER), "No folder named test"
 
-    # Get annotation file paths
-    train_ann_file = TRAIN_FOLDER + '/_annotations.coco.json'
-    val_ann_file = VALID_FOLDER + '/_annotations.coco.json'
-    test_ann_file = TEST_FOLDER + '/_annotations.coco.json'
+    if dataset_type == 'coco':
+        # Get annotation file paths
+        train_ann_file = TRAIN_FOLDER + '/_annotations.coco.json'
+        val_ann_file = VALID_FOLDER + '/_annotations.coco.json'
+        test_ann_file = TEST_FOLDER + '/_annotations.coco.json'
 
-    assert os.path.isfile(
-        train_ann_file), "No annotations file in train folder"
-    assert os.path.isfile(
-        val_ann_file), "No annotations file in validation folder"
-    assert os.path.isfile(test_ann_file), "No annotations file in test folder"
+        assert os.path.isfile(
+            train_ann_file), "No annotations file in train folder"
+        assert os.path.isfile(
+            val_ann_file), "No annotations file in validation folder"
+        assert os.path.isfile(
+            test_ann_file), "No annotations file in test folder"
 
     # Load data
-    train_dataset = BasketballDataset(root=TRAIN_FOLDER,
-                                      annFile=train_ann_file,
-                                      transform=transform)
-    val_dataset = BasketballDataset(root=VALID_FOLDER,
-                                    annFile=val_ann_file,
-                                    transform=transform)
-    test_dataset = BasketballDataset(root=TEST_FOLDER,
-                                     annFile=test_ann_file,
-                                     transform=transform)
+    train_dataset = BasketballDataset(root_dir=folder_name, image_set='train')
+    val_dataset = BasketballDataset(root_dir=folder_name, image_set='valid')
+    test_dataset = BasketballDataset(root_dir=folder_name, image_set='test')
 
     return train_dataset, val_dataset, test_dataset
-
-
-# Example of function call
-# train_dataset, val_dataset, test_dataset = load_data(
-#     '/NBA-Player-Detector-1/', transforms.Compose([transforms.ToTensor()]))
