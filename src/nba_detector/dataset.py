@@ -11,8 +11,7 @@ import torchvision.datasets as datasets
 
 from roboflow import Roboflow
 
-api_key = os.getenv('ROBOFLOW_KEY')
-rf = Roboflow(api_key=api_key)
+rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
 project = rf.workspace(
     "francisco-zenteno-uryfd").project("nba-player-detector")
 dataset = project.version(1).download("coco")
