@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Dataset
+NBA-Player-Detector-1
+.vscode/settings.json
