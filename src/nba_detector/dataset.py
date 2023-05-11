@@ -1,16 +1,15 @@
 import os
 import xml.etree.ElementTree as ET
 from PIL import Image
-
+import albumentations as A
 from collections import defaultdict
-from typing import Tuple, List
-
+import numpy as np
+from roboflow import Roboflow
 from torch import Tensor, LongTensor
 from torch.utils.data import Dataset
-import torchvision.transforms as transforms
-import torchvision.transforms.functional as TF
+from torchvision.transforms.functional import pil_to_tensor
+from typing import Tuple, List
 
-from roboflow import Roboflow
 
 
 def download_dataset_from_roboflow(format: str = 'voc') -> None:
@@ -26,8 +25,7 @@ def download_dataset_from_roboflow(format: str = 'voc') -> None:
         dataset : Dataset
         """
     rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
-    project = rf.workspace(
-        "francisco-zenteno-uryfd").project("nba-player-detector")
+    project = rf.workspace("francisco-zenteno-uryfd").project("nba-player-detector")
     project.version(1).download(format)
 
 
@@ -42,7 +40,7 @@ class BasketballDataset(Dataset):
     # Labels to map detection objects to numbers
     LABEL_MAP: defaultdict(int) = {'ball': 1, 'player': 2, 'rim': 3}
 
-    def __init__(self, root_dir: str, transform: transforms = transforms.Compose([transforms.ToTensor()]), image_set: str = 'train') -> None:
+    def __init__(self, root_dir: str, transform: A.Compose=None, image_set: str = 'train') -> None:
         super().__init__()
         self.root_dir = root_dir
         self.transform = transform
@@ -97,11 +95,24 @@ class BasketballDataset(Dataset):
 
         img_path = self.image_ids[index] + BasketballDataset.JPG_EXTENSION
         ann_path = self.image_ids[index] + BasketballDataset.XML_EXTENSION
-        image = Image.open(img_path).convert('RGB')
+        image = Image.open(img_path).convert('RGB') # This is PIL Image
+        image = pil_to_tensor(image) # This is a Tensor now
         targets = self._get_annotations(ann_path)
         if self.transform:
-            targets[BasketballDataset.BOXES_KEY] = TF.resize
-            image = self.transform(image)
+            # Albumentations expects np.ndarray
+            image_np = image.numpy()
+            # the parameter 'bounding_box_labels' in self.transform has to have the same name as when defined in
+            # the compose function. For example:
+            #    transformation = A.Compose([
+            #        A.HorizontalFlip(p=1),
+            #        ToTensorV2()
+            #    ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
+            transformed = self.transform(image=image_np, bboxes=targets["boxes"], bounding_box_labels=targets['labels'])
+            image = transformed['image']
+
+            # Transform the boxes to Tensors, because they are retrieved as list of tuples
+            targets["boxes"] = Tensor(transformed['bboxes'])
+        
         return image, targets
 
     def _get_annotations(self, xml_file_path: str) -> defaultdict[Tensor]:
@@ -150,15 +161,13 @@ class BasketballDataset(Dataset):
         return targets
 
 
-def load_data(folder_name: str, transform: transforms, dataset_type: str = 'voc'):
+def load_data(folder_name: str, dataset_type: str = 'voc'):
     """Load the dataset from specified folder
 
     Parameters
     ----------
     folder_name : str
-        Path to root directory containing the dataset
-    transform : transforms
-        Transformations to apply to dataset
+        Path to root directory containing the dataset    
 
     Returns
     -------

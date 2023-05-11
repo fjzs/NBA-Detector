@@ -1,11 +1,9 @@
 from collections import defaultdict
 import os
-
 from src.nba_detector.dataset import load_data, download_dataset_from_roboflow, BasketballDataset
-
 from torch import Tensor
 from torch.utils.data import DataLoader
-import torchvision.transforms as transforms
+
 
 PATH_TO_DATASET = './NBA-Player-Detector-1/'
 
@@ -40,8 +38,7 @@ def test_basketball_dataset_test():
 
 
 def test_get_dataset():
-    train_dataset, val_dataset, test_dataset = load_data(
-        PATH_TO_DATASET, transforms.Compose([transforms.ToTensor()]))
+    train_dataset, val_dataset, test_dataset = load_data(PATH_TO_DATASET)
 
     assert train_dataset is not None
     assert test_dataset is not None
@@ -49,8 +46,7 @@ def test_get_dataset():
 
 
 def test_make_dataloader():
-    train_dataset, val_dataset, test_dataset = load_data(
-        PATH_TO_DATASET, transforms.Compose([transforms.ToTensor()]))
+    train_dataset, val_dataset, test_dataset = load_data(PATH_TO_DATASET)
     trainloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
     valloader = DataLoader(val_dataset, batch_size=4, shuffle=False)
     testloader = DataLoader(test_dataset, batch_size=4, shuffle=False)
@@ -61,8 +57,7 @@ def test_make_dataloader():
 
 
 def test_dataloader_datatypes():
-    train_dataset, val_dataset, test_dataset = load_data(
-        PATH_TO_DATASET, transforms.Compose([transforms.ToTensor()]))
+    train_dataset, val_dataset, test_dataset = load_data(PATH_TO_DATASET)
     trainloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
     valloader = DataLoader(val_dataset, batch_size=4, shuffle=False)
     testloader = DataLoader(test_dataset, batch_size=4, shuffle=False)
@@ -75,8 +70,7 @@ def test_dataloader_datatypes():
 
 
 def test_target_keys():
-    train_dataset, val_dataset, test_dataset = load_data(
-        PATH_TO_DATASET, transforms.Compose([transforms.ToTensor()]))
+    train_dataset, val_dataset, test_dataset = load_data(PATH_TO_DATASET)
     trainloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
     valloader = DataLoader(val_dataset, batch_size=4, shuffle=False)
     testloader = DataLoader(test_dataset, batch_size=4, shuffle=False)
