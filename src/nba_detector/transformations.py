@@ -14,7 +14,7 @@ def get_transformation(format:str = "pascal_voc") -> A.Compose:
         raise ValueError(f"Format not recognized, it was sent {format}")
     
     transformation = A.Compose([
-        A.HorizontalFlip(p=1),
+        A.HorizontalFlip(p=0.5),
         ToTensorV2()
     ], bbox_params=A.BboxParams(format=format, label_fields=['bounding_box_labels']))
 
