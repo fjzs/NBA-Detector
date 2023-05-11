@@ -10,7 +10,7 @@ def get_model(model_name:str, num_classes:int, trainable_backbone_layers:int=3) 
     """Creates a movel specified by its name and the number of classes
 
     Args:
-    - model_name: pick one of ["fasterrcnn"]
+    - model_name: pick one of ["fasterrcnn" (VOC format)]
     - num_classes: 1 (background) + non-background classes to predict
     - trainable_backbone_layers: number of trainable (not frozen) layers starting from final block.
             Valid values are between 0 and 5, with 5 meaning all backbone layers are trainable. Default is 3.
@@ -36,7 +36,7 @@ def get_model(model_name:str, num_classes:int, trainable_backbone_layers:int=3) 
 
 
 def get_model_fasterrcnn(num_classes:int, trainable_backbone_layers:int=5) -> torch.nn.Module:
-    """Creates the fasterrcnn model
+    """Creates the fasterrcnn model, which expects VOC format
 
     Args:
     - num_classes: 1 (background) + non-background classes to predict
