@@ -5,11 +5,11 @@ import albumentations as A
 from collections import defaultdict
 import numpy as np
 from roboflow import Roboflow
+import torch
 from torch import Tensor, LongTensor
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import pil_to_tensor
 from typing import Tuple, List
-
 
 
 def download_dataset_from_roboflow(format: str = 'voc') -> None:
@@ -159,6 +159,33 @@ class BasketballDataset(Dataset):
         targets[BasketballDataset.FILEPATH_KEY] = xml_file_path.removesuffix(
             BasketballDataset.XML_EXTENSION)
         return targets
+
+    def collate_fn(self, batch):
+        """
+        Since each image may have a different number of objects, we need a collate function (to be passed to the DataLoader).
+
+        This describes how to combine these tensors of different sizes. We use lists.
+
+        Note: this need not be defined in this Class, can be standalone.
+
+        :param batch: an iterable of N sets from __getitem__()
+        :return: a tensor of images, lists of varying-size tensors of bounding boxes, labels, and difficulties
+        """
+
+        images = list()
+        boxes = list()
+        labels = list()        
+
+        for b in batch: # b is a tuple
+            img = b[0]
+            target_dict = b[1]
+            images.append(img)
+            boxes.append(target_dict["boxes"])
+            labels.append(target_dict["labels"])            
+
+        images = torch.stack(images, dim=0)
+
+        return images, boxes, labels
 
 
 def load_data(folder_name: str, dataset_type: str = 'voc'):
