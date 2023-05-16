@@ -1,13 +1,14 @@
 import torch
+import torchvision
 from torchvision.utils import draw_bounding_boxes
 from torchvision.io import read_image
 import cv2
 import numpy as np
 
 CLASS_COLORS = {
-    0 : "red",
-    1 : "green",
-    2 : "blue"
+    0 : (255,0,0),
+    1 : (0,255,0),
+    2 : (0,0,255)
 }
 
 def drawline(img,pt1,pt2,color,thickness=1,style='dotted',gap=20):
@@ -47,9 +48,22 @@ def drawrect(img,pt1,pt2,color,thickness=1,style='dotted'):
     pts = [pt1,(pt2[0],pt1[1]),pt2,(pt1[0],pt2[1])] 
     drawpoly(img,pts,color,thickness,style)
 
-def visualize_one_image(image: torch.Tensor, prediction: dict(torch.Tensor), ground_truth: dict(torch.Tensor)) -> np.ndarray :
+def visualize_one_image(image, prediction, ground_truth) -> np.ndarray :
     """
+    image: torch.tensor of shape (C x H x W) and dtype uint8.
+
+    prediction: dict(Tensor) containing:
+        boxes: (Tensor) – Tensor of size (N, 4) containing bounding boxes in (xmin, ymin, xmax, ymax)
+            format. Note that the boxes are absolute coordinates with respect to the image. 
+            In other words: 0 <= xmin < xmax < W and 0 <= ymin < ymax < H.
+        labels: (List[str]) – List containing the labels of bounding boxes.
     
+    ground_truth: dict(Tensor) containing:
+        boxes: (Tensor) – Tensor of size (N, 4) containing bounding boxes in (xmin, ymin, xmax, ymax)
+            format. Note that the boxes are absolute coordinates with respect to the image. 
+            In other words: 0 <= xmin < xmax < W and 0 <= ymin < ymax < H.
+        labels: (List[str]) – List containing the labels of bounding boxes.
+
     """
 
     pred_boxes = prediction['boxes']
@@ -58,11 +72,11 @@ def visualize_one_image(image: torch.Tensor, prediction: dict(torch.Tensor), gro
     pred_labels = prediction['labels']
     gt_labels = ground_truth['labels']
 
-    color_codes = torch.tensor([CLASS_COLORS[label.item()] for label in [0,1,2]])
+    color_codes = [value for key,value in CLASS_COLORS.items()]
 
-    vis_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors = color_codes)
+    vis_image = draw_bounding_boxes(torch.ByteTensor(image), pred_boxes, colors = color_codes)
 
-    vis_image = vis_image.numpy()
+    vis_image = vis_image.permute(1,2,0).numpy()
 
     for j in range(gt_boxes.shape[0]):
         box = gt_boxes[j].numpy()
@@ -71,8 +85,8 @@ def visualize_one_image(image: torch.Tensor, prediction: dict(torch.Tensor), gro
         
         x_min, y_min, x_max, y_max = box
         
-        color = class_colors[label]
-        cv2.rectangle(vis_image, (int(x_min), int(y_min)), (int(x_max), int(y_max)), 'white', 2)
+        # color = class_colors[label]
+        cv2.rectangle(vis_image, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255,255,255), 2)
         drawrect(vis_image,(int(x_min), int(y_min)), (int(x_max), int(y_max)), CLASS_COLORS[label], 2, 'dotted')
 
     return vis_image
@@ -93,9 +107,11 @@ if __name__ == '__main__':
     ground_truth['boxes'] = gt_boxes
     ground_truth['labels'] = gt_labels
 
-    img = visualize_one_image(read_image('dog.jpg'), prediction, ground_truth)
+    img = read_image('dog.jpg')
+
+    img = visualize_one_image(img, prediction, ground_truth)
+
+    img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
 
     cv2.imwrite('test.jpg',img)
-
-# result = draw_bounding_boxes(dog1_int, boxes, colors=colors, width=5)
-# show(result)
+    
