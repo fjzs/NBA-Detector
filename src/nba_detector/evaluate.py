@@ -40,7 +40,7 @@ def update_metric_on_batch(metric:MeanAveragePrecision(), model:torch.nn.Module,
     Returns:
         metric: An updated instance of MeanAveragePrecision()    
     """
-    assert(len(image_batch)==len(targets)), "Size mismatch in Batch size and length of target list {} != {}".format(len(images),len(targets))
+    assert(len(image_batch)==len(targets)), "Size mismatch in Batch size and length of target list {} != {}".format(len(image_batch),len(targets))
     model.eval()
     with torch.no_grad():
         preds = model(image_batch)
