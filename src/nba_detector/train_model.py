@@ -1,6 +1,6 @@
 from collections import defaultdict
 import torch
-from .dataloader import load_data
+from .dataset import load_data
 from tqdm import tqdm
 import time # TODO remove
 import math
@@ -11,16 +11,17 @@ import sys
 def collate_fn(batch):
     images = [] # list(image for image in images)
     labels = []
-    for image, label, _ in batch:
+    for image, label in batch:
         # labels.append({k: torch.Tensor(v) for k,v in label.items()})
         # Some images have no boxes in the current dataset which results in error when passed to the model.
         # TODO we should remove these from our dataset so that this is not required.
         if len(label['labels']) == 0: continue
-        images.append(image)
+        images.append(image.float()/255.0)
         labels.append({
-            'boxes': torch.Tensor([[box[0], box[1], box[0]+box[2], box[1]+box[3]] for box in label['boxes']]),
-            'labels': torch.LongTensor(label['labels']),
+            'boxes': label['boxes'],
+            'labels': label['labels'],
         })
+        labels.append(label)
     return images, labels
 
 
@@ -28,12 +29,12 @@ def train_one_epoch(model: torch.nn.Module, optimizer: torch.optim.Optimizer, tr
     model = model.to(device)
     model.train()
 
-    print_freq = 1
+    print_freq = 4
     logger = defaultdict(list)
     for i, (images, labels) in tqdm(enumerate(trainloader), desc=f"Epoch {epoch:02d}: Batches"):
         images = list(image.to(device) for image in images)
         labels = [{k: v.to(device) for k, v in t.items()} for t in labels]
-        print([{k: v.shape for k,v in t.items()} for t in labels])
+        # print([{k: v.shape for k,v in t.items()} for t in labels])
 
         optimizer.zero_grad()
         loss_dict = model(images, labels)
@@ -46,8 +47,9 @@ def train_one_epoch(model: torch.nn.Module, optimizer: torch.optim.Optimizer, tr
         optimizer.step()
 
         # Logging
-        if i % print_freq == 0:
-            print(f"Epoch {epoch}: Batch {i}:", {k: v.item() for k,v in loss_dict.items()})
+        if (i>0 and i % print_freq == 0) or (i == len(trainloader) - 1) :
+            print(f"Epoch {epoch}: Batch {i}: mean_loss={loss.item()}", {k: v.item() for k,v in loss_dict.items()})
+            # print(f"Epoch {epoch}: Batch {i}:", loss.item())
         for k,v in loss_dict.items():
             logger[k].append(v.item())
 
@@ -55,7 +57,7 @@ def train_one_epoch(model: torch.nn.Module, optimizer: torch.optim.Optimizer, tr
 
 
 def train(model: torch.nn.Module, path, num_epochs: int = 1):
-    trainset, valset, testset = load_data(path, 224, 224, 4)
+    trainset, valset, testset = load_data(path)
 
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=2, shuffle=False, num_workers=1, drop_last=True,
