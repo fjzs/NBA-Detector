@@ -1,8 +1,6 @@
 from collections import defaultdict
 import torch
-from .dataset import load_data
 from tqdm import tqdm
-import time # TODO remove
 import math
 import sys
 
@@ -25,7 +23,14 @@ def collate_fn(batch):
     return images, labels
 
 
-def train_one_epoch(model: torch.nn.Module, optimizer: torch.optim.Optimizer, trainloader: torch.utils.data.DataLoader, device: torch.device, epoch: int):
+def train_one_epoch(
+        model: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        trainloader: torch.utils.data.DataLoader,
+        valloader: torch.utils.data.DataLoader,
+        device: torch.device, epoch: int
+    ):
+    """Train one epoch."""
     model = model.to(device)
     model.train()
 
@@ -56,11 +61,13 @@ def train_one_epoch(model: torch.nn.Module, optimizer: torch.optim.Optimizer, tr
     return logger
 
 
-def train(model: torch.nn.Module, path, num_epochs: int = 1):
-    trainset, valset, testset = load_data(path)
-
+def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: torch.utils.data.Dataset, num_epochs: int = 1):
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=2, shuffle=False, num_workers=1, drop_last=True,
+        collate_fn=collate_fn
+    )
+    valloader = torch.utils.data.DataLoader(
+        valset, batch_size=2, shuffle=False, num_workers=1, drop_last=True,
         collate_fn=collate_fn
     )
 
@@ -73,11 +80,14 @@ def train(model: torch.nn.Module, path, num_epochs: int = 1):
 
     logger = defaultdict(list)
     for i in range(num_epochs):
-        epoch_logs = train_one_epoch(model, optimizer, trainloader, device, i)
+        epoch_logs = train_one_epoch(model, optimizer, trainloader, valloader, device, i)
         # lr_scheduler.step()
         # Update Logs
         for k,v in epoch_logs.items():
-            logger[k].extend(v)
+            if isinstance(v, list):
+                logger[k].extend(v)
+            else:
+                logger[k].append(v)
 
     print("*** End of training")
     return logger
