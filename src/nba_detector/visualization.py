@@ -74,7 +74,7 @@ def visualize_one_image(image, prediction, ground_truth) -> np.ndarray :
 
     color_codes = [value for key,value in CLASS_COLORS.items()]
 
-    vis_image = draw_bounding_boxes(torch.ByteTensor(image), pred_boxes, colors = color_codes)
+    vis_image = draw_bounding_boxes(torch.ByteTensor(image), pred_boxes, colors = [CLASS_COLORS[label.item()] for label in pred_labels])
 
     vis_image = vis_image.permute(1,2,0).numpy()
 
