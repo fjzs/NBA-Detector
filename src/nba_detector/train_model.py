@@ -4,6 +4,7 @@ from tqdm import tqdm
 import math
 import sys
 
+from src.nba_detector.evaluate import evaluate_dataloader
 
 
 def collate_fn(batch):
@@ -19,7 +20,7 @@ def collate_fn(batch):
             'boxes': label['boxes'],
             'labels': label['labels'],
         })
-        labels.append(label)
+        # labels.append(label)
     return images, labels
 
 
@@ -58,6 +59,9 @@ def train_one_epoch(
         for k,v in loss_dict.items():
             logger[k].append(v.item())
 
+    # Evaluate on validation dataset
+    val_metrics = evaluate_dataloader(model, valloader)
+    logger["val_map"] = val_metrics["map"].item()
     return logger
 
 
@@ -89,5 +93,8 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
             else:
                 logger[k].append(v)
 
+    # Save model checkpoint
+    # TODO: pass checkpoint path as cfg parameter.
+    torch.save(model.state_dict, "model.pt")
     print("*** End of training")
     return logger
