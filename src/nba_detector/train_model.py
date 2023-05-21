@@ -95,6 +95,6 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
 
     # Save model checkpoint
     # TODO: pass checkpoint path as cfg parameter.
-    torch.save(model.state_dict, "model.pt")
+    torch.save(model.state_dict(), "model.pth")
     print("*** End of training")
     return logger

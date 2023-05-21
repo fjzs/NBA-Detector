@@ -18,9 +18,12 @@ def main():
     loss_metrics = np.array([logs[k] for k in loss_keys])
     print(loss_metrics.shape)
     training_loss = loss_metrics.sum(axis=0)
-    plt.plot(training_loss)
-    plt.show()
-    plt.waitforbuttonpress()
+    print(f"Training loss: {training_loss}")
+    
+    # commented this lines apparently they dont work in colab
+    #plt.plot(training_loss) 
+    #plt.show()
+    #plt.waitforbuttonpress()
 
 if __name__ == '__main__':
     main()
