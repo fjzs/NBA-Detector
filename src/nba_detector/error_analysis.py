@@ -55,8 +55,7 @@ if __name__ == "__main__":
     trainset, valset, testset = load_data(dataset_path)
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=2, shuffle=False, num_workers=1, drop_last=True,
-        collate_fn=collate_fn
-    )
+        collate_fn=collate_fn)
 
     # Analyze the images
     for i, (images, labels) in enumerate(trainloader):
@@ -64,8 +63,12 @@ if __name__ == "__main__":
         print(f"Shape of images: {images[0].shape}")
         print(f"labels are:\n{labels}")
         preds = model(images)
-        print(preds)
-        break
+        print(f"preds shape is: {preds.shape}")
+        print(f"preds are:\n{preds}")
+        
+        image = images[0]
+        label = labels[0]
+
 
 
     

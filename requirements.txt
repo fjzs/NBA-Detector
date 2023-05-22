@@ -36,6 +36,7 @@ nvidia-nvtx-cu11==11.7.91
 opencv-python==4.7.0.72
 opencv-python-headless==4.7.0.72
 packaging==23.1
+pandas==2.0.1
 Pillow==9.5.0
 pluggy==1.0.0
 pyparsing==2.4.7

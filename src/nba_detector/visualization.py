@@ -6,9 +6,9 @@ import cv2
 import numpy as np
 
 CLASS_COLORS = {
-    0 : (255,0,0),
-    1 : (0,255,0),
-    2 : (0,0,255)
+    1 : (255,0,0),
+    2 : (0,255,0),
+    3 : (0,0,255)
 }
 
 def drawline(img,pt1,pt2,color,thickness=1,style='dotted',gap=20):
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     img = visualize_one_image(img, prediction, ground_truth)
 
-    img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     cv2.imwrite('test.jpg',img)
     
