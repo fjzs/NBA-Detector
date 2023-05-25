@@ -60,6 +60,7 @@ def train_one_epoch(
             logger[k].append(v.item())
 
     # Evaluate on validation dataset
+    model = model.to("cpu")
     val_metrics = evaluate_dataloader(model, valloader)
     logger["val_map"] = val_metrics["map"].item()
     return logger
