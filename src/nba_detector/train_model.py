@@ -65,13 +65,25 @@ def train_one_epoch(
     return logger
 
 
-def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: torch.utils.data.Dataset, num_epochs: int = 1):
+def train(model: torch.nn.Module, 
+          trainset: torch.utils.data.Dataset, 
+          valset: torch.utils.data.Dataset, 
+          num_epochs: int = 1,
+          batch_size:int = 16):
     trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=2, shuffle=False, num_workers=1, drop_last=True,
+        trainset, 
+        batch_size=batch_size, 
+        shuffle=False, 
+        num_workers=1, 
+        drop_last=True,
         collate_fn=collate_fn
     )
     valloader = torch.utils.data.DataLoader(
-        valset, batch_size=2, shuffle=False, num_workers=1, drop_last=True,
+        valset, 
+        batch_size=batch_size, 
+        shuffle=False, 
+        num_workers=1, 
+        drop_last=True,
         collate_fn=collate_fn
     )
 
