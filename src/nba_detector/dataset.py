@@ -12,7 +12,7 @@ from typing import Tuple, List
 
 
 
-def download_dataset_from_roboflow(format: str = 'voc') -> None:
+def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> None:
     """Download the dataset from Roboflow website using API call
 
         Parameters
@@ -24,9 +24,12 @@ def download_dataset_from_roboflow(format: str = 'voc') -> None:
         -------
         dataset : Dataset
         """
+    assert type(version_id) == int, f"version_id is not int, it is {version_id}"
+    assert 1 <= version_id <= 3, f"version_id has to be >=1 and <=3, it is {version_id}"
+
     rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project = rf.workspace("francisco-zenteno-uryfd").project("nba-player-detector")
-    project.version(1).download(format)
+    project.version(version_id).download(format)
 
 
 class BasketballDataset(Dataset):
