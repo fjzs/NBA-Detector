@@ -7,22 +7,29 @@ import torch
 import torch.utils.data
 from PIL import Image
 import matplotlib.pyplot as plt
+import yaml
 
 
 def main():
-    # Config
-    NUM_CLASSES = 4 # 1 + background
-    TRAINABLE_LAYERS = 5
-    DATASET_PATH = "<put your path>"
-    
+    #--------- Config -------------#
+    config_file = './config.yaml'
+    with open(config_file) as cf_file:
+        config = yaml.safe_load(cf_file.read())
+        print(f"\nConfig file is:\n{config}\n")
+    DATASET_PATH = config['dataset_path']
+    TRAINABLE_LAYERS = config['trainable_layers']
+    NUM_EPOCHS = config['epochs']
+    BATCH_SIZE = config['batch_size']
+    #-------------------------------#
+
     print("Loading dataset...")
     trainset, valset, testset = load_data(DATASET_PATH)
 
     print("Building model...")
-    model = get_model("fasterrcnn", NUM_CLASSES, TRAINABLE_LAYERS)
+    model = get_model("fasterrcnn", trainable_backbone_layers=TRAINABLE_LAYERS)
 
     print("Training model...")
-    logs = train(model, trainset, valset, 5)
+    logs = train(model, trainset, valset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
     loss_keys = [k for k in logs.keys() if k.startswith("loss_")]
     loss_metrics = np.array([logs[k] for k in loss_keys])
     print(loss_metrics.shape)

@@ -6,7 +6,7 @@ import torchvision
 import torchinfo
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
-def get_model(model_name:str = "fasterrcnn", num_classes:int = 3, trainable_backbone_layers:int=3) -> torch.nn.Module:
+def get_model(model_name:str = "fasterrcnn", num_classes:int = 4, trainable_backbone_layers:int=3) -> torch.nn.Module:
     """Creates a movel specified by its name and the number of classes
 
     Args:
