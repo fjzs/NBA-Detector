@@ -4,8 +4,8 @@ from tqdm import tqdm
 import math
 import sys
 
-from src.nba_detector.evaluate import evaluate_dataloader
-
+#from src.nba_detector.evaluate import evaluate_dataloader
+from evaluate import evaluate_dataloader
 
 def collate_fn(batch):
     images = [] # list(image for image in images)
