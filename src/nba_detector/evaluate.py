@@ -2,6 +2,8 @@ import torch
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 
+# Reference: https://medium.com/data-science-at-microsoft/how-to-smoothly-integrate-meanaverageprecision-into-your-training-loop-using-torchmetrics-7d6f2ce0a2b3
+
 def update_metric(metric:MeanAveragePrecision(), preds:list, targets:list) -> dict:
     """
     metric: An instance of MeanAveragePrecision()
