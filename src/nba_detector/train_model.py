@@ -60,8 +60,9 @@ def train_one_epoch(
             logger[k].append(v.item())
 
     # Evaluate on validation dataset
-    val_metrics = evaluate_dataloader(model, valloader)
+    val_metrics = evaluate_dataloader(model, valloader, device)
     logger["val_map"] = val_metrics["map"].item()
+    logger["val_loss"] = val_metrics["loss"]
     return logger
 
 
