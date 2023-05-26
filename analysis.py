@@ -40,11 +40,17 @@ def apply(model, dataloader, folder_to_save, split):
     model = model.to(device)
     id = 1
     for (images, labels) in dataloader:
+
         # Load batch in GPU
         images = list(image.to(device) for image in images)
         labels = [{k: v.to(device) for k, v in t.items()} for t in labels]
         predictions = model(images)
-        
+
+        # Traspass to CPU
+        images = [x.cpu() for x in images]
+        labels = [{k: v.cpu() for k, v in t.items()} for t in labels]
+        predictions = [{k: v.cpu() for k, v in t.items()} for t in predictions]
+    
         N = len(images)
         for i in range(N):
             image = images[i]
@@ -60,7 +66,8 @@ def apply(model, dataloader, folder_to_save, split):
             # Save the image
             image_path = os.path.join(split_folder, id_name + '.jpg')
             vis_image = cv2.cvtColor(vis_image, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(image_path, vis_image)
+            if not cv2.imwrite(image_path, vis_image):
+                print(f"Warning: image {image_path} was not saved!")
             id += 1
     
     # Assemble the df
@@ -254,17 +261,21 @@ def main():
     model.load_state_dict(torch.load(MODEL_PATH))
     model.eval()
 
-    # Load dataset    
+    # Load dataset
+    print(f"Loading dataset...")   
     trainset, valset, testset = load_data(DATASET_PATH)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
     valloader = torch.utils.data.DataLoader(valset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
     testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
 
     if APPLY_TO_TRAIN:
+        print(f"\nApplying to train...")
         apply(model, trainloader, FOLDER_NAME, "train")
     if APPLY_TO_VALID:
+        print(f"\nApplying to val...")
         apply(model, valloader, FOLDER_NAME, "val")
     if APPLY_TO_TEST:
+        print(f"\nApplying to test...")
         apply(model, testloader, FOLDER_NAME, "test")
 
 

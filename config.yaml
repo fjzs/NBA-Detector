@@ -6,9 +6,9 @@ train:
   model_name: "my_name"
 
 error_analysis:
-  model_path: "./model.pth"
+  model_path: "./../m_v3_50e.pth"
   dataset_path: "./../Datasets/v1"
   apply_to_train: True
   apply_to_valid: True
   apply_to_test: True
-  folder_name: 'experiment1'
+  folder_name: 'Analysis_mv3_d1'
