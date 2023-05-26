@@ -1,11 +1,25 @@
 import torch
-from visualization import CLASS_COLORS, drawrect
+from src.nba_detector.visualization import CLASS_COLORS, drawrect
 import cv2
 import pandas as pd
 import os
+import yaml
+from src.nba_detector.create_model import get_model
+from src.nba_detector.dataset import load_data
+from src.nba_detector.train_model import collate_fn
 
 
-def apply(model, dataloader, folder_to_save):
+def apply(model, dataloader, folder_to_save, split):
+    """Applies the error analysis function to a particular dataloader and saves the output in that folder
+
+    Args:
+        model: 
+        dataloader: 
+        folder_to_save: (it will create it if not existant)
+        split: one of train, val or test
+    """
+
+    assert split in ["train", "val", "test"]
 
     # Data to gather to fill in a df
     img_ids = []
@@ -17,9 +31,20 @@ def apply(model, dataloader, folder_to_save):
         os.makedirs(folder_to_save)
         print(f"Folder created: {folder_to_save}")
 
+    split_folder = os.path.join(folder_to_save, split)
+    if not os.path.exists(split_folder):
+        os.makedirs(split_folder)
+        print(f"Folder created: {split_folder}")
+    
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model = model.to(device)
     id = 1
     for (images, labels) in dataloader:
+        # Load batch in GPU
+        images = list(image.to(device) for image in images)
+        labels = [{k: v.to(device) for k, v in t.items()} for t in labels]
         predictions = model(images)
+        
         N = len(images)
         for i in range(N):
             image = images[i]
@@ -33,7 +58,7 @@ def apply(model, dataloader, folder_to_save):
             fns.append(fn)
 
             # Save the image
-            image_path = os.path.join(folder_to_save, id_name + '.jpg')
+            image_path = os.path.join(split_folder, id_name + '.jpg')
             vis_image = cv2.cvtColor(vis_image, cv2.COLOR_RGB2BGR)
             cv2.imwrite(image_path, vis_image)
             id += 1
@@ -44,7 +69,7 @@ def apply(model, dataloader, folder_to_save):
             "fp": fps, 
             "fn": fns}
     df = pd.DataFrame(data)
-    df.to_csv(os.path.join(folder_to_save, 'df.csv'))
+    df.to_csv(os.path.join(split_folder, 'df_' + split + '.csv'))
     print(f"df saved!")
 
 
@@ -208,30 +233,41 @@ def calculate_tp_tn_fp_fn(gt_boxes: list, pred_boxes: list, iou_threshold=0.5):
 
     return tp, tn, fp, fn
 
+def main():
+    #--------- Config -------------#
+    config_file = './config.yaml'
+    with open(config_file) as cf_file:
+        config = yaml.safe_load(cf_file.read())
+        print(f"\nConfig file is:\n{config['error_analysis']}\n")
 
-"""
-if __name__ == "__main__":
+    MODEL_PATH = config['error_analysis']['model_path']
+    DATASET_PATH = config['error_analysis']['dataset_path']
+    APPLY_TO_TRAIN = config['error_analysis']['apply_to_train']
+    APPLY_TO_VALID = config['error_analysis']['apply_to_valid']
+    APPLY_TO_TEST = config['error_analysis']['apply_to_test']
+    FOLDER_NAME = config['error_analysis']['folder_name']
+    #-------------------------------#
     
     # Load Model
-    from create_model import get_model
-    from dataset import load_data
-    model = get_model("fasterrcnn", num_classes=4, trainable_backbone_layers=1)
-    model_path = "C://Users//zente//Downloads//model.pth"
-    model.load_state_dict(torch.load(model_path))
+    print(f"Loading model...")
+    model = get_model()
+    model.load_state_dict(torch.load(MODEL_PATH))
     model.eval()
-    print(model)
 
-    # Load dataset
-    from train_model import collate_fn
-    dataset_path = "./NBA-Player-Detector-1"
-    trainset, valset, testset = load_data(dataset_path)
-    trainloader = torch.utils.data.DataLoader(
-        trainset, 
-        batch_size=2, 
-        shuffle=False, 
-        num_workers=1, 
-        drop_last=True,
-        collate_fn=collate_fn)
+    # Load dataset    
+    trainset, valset, testset = load_data(DATASET_PATH)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
+    valloader = torch.utils.data.DataLoader(valset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
 
-    apply(model, trainloader, "./EA/")
-"""
+    if APPLY_TO_TRAIN:
+        apply(model, trainloader, FOLDER_NAME, "train")
+    if APPLY_TO_VALID:
+        apply(model, valloader, FOLDER_NAME, "val")
+    if APPLY_TO_TEST:
+        apply(model, testloader, FOLDER_NAME, "test")
+
+
+if __name__ == "__main__":
+    main()
+    

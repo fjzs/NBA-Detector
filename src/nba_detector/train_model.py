@@ -4,8 +4,8 @@ from tqdm import tqdm
 import math
 import sys
 
-#from src.nba_detector.evaluate import evaluate_dataloader
-from evaluate import evaluate_dataloader
+from src.nba_detector.evaluate import evaluate_dataloader
+
 
 def collate_fn(batch):
     images = [] # list(image for image in images)
@@ -98,7 +98,8 @@ def train_one_epoch_v2(
     return logger
 
 
-def train(model: torch.nn.Module, 
+def train(model: torch.nn.Module,
+          filepath_to_save: str, 
           trainset: torch.utils.data.Dataset, 
           num_epochs: int = 1,
           batch_size:int = 8):
@@ -121,6 +122,8 @@ def train(model: torch.nn.Module,
     )
     """
 
+    assert filepath_to_save.endswith(".pth"), f"filepath_to_save has to end with .pth"
+
     # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
@@ -139,7 +142,7 @@ def train(model: torch.nn.Module,
 
     # Save model checkpoint
     # TODO: pass checkpoint path as cfg parameter.
-    torch.save(model.state_dict(), "model.pth")
+    torch.save(model.state_dict(), filepath_to_save)
     print("Model saved to model.pth")
     print("*** End of training")
     return logger

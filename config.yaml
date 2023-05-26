@@ -1,4 +1,14 @@
-dataset_path: "./NBA-Player-Detector-1"
-trainable_layers: 1 # 0 all frozen, 5 all non-frozen
-epochs: 2
-batch_size: 3
+train:
+  dataset_path: "./../Datasets/v3"
+  trainable_layers: 5 # 0 all frozen, 5 all non-frozen
+  epochs: 50
+  batch_size: 8
+  model_name: "my_name"
+
+error_analysis:
+  model_path: "./model.pth"
+  dataset_path: "./../Datasets/v1"
+  apply_to_train: True
+  apply_to_valid: True
+  apply_to_test: True
+  folder_name: 'experiment1'
