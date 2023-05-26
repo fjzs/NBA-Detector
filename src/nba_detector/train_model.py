@@ -68,7 +68,6 @@ def train_one_epoch_v2(
         model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         trainloader: torch.utils.data.DataLoader,
-        valloader: torch.utils.data.DataLoader,
         device: torch.device
     ):
     """Train one epoch."""
