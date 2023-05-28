@@ -101,8 +101,16 @@ def evaluate_dataloader(model:torch.nn.Module, dataloader:torch.utils.data.DataL
     metric = MeanAveragePrecision(iou_type = 'bbox', class_metrics = True)
     val_loss = update_metric_on_dataloader(metric,model,dataloader, device)
     mAP_dict = metric.compute()
-    mAP_dict['loss'] = val_loss
-    return mAP_dict
+    
+    # I'm going to return only a set of metrics
+    subset_metrics = {}
+    subset_metrics["map"] = mAP_dict["map"].item()
+    subset_metrics["loss"] = val_loss
+    map_per_class = mAP_dict['map_per_class'].tolist()
+    for i, x in enumerate(map_per_class):
+        subset_metrics['map_per_class_' + str(i+1)] = x
+
+    return subset_metrics
 
 def evaluate_batch(model:torch.nn.Module, image_batch:torch.Tensor, targets:list, device: torch.device) -> dict :
     """

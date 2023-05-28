@@ -68,43 +68,11 @@ def train_one_epoch(
 
     # Evaluate on validation dataset
     val_metrics = evaluate_dataloader(model, valloader, device)
-    logger_single_value["val_map"] = val_metrics["map"].item()
-    logger_single_value["val_loss"] = val_metrics["loss"]
+    for key in val_metrics:
+        logger_single_value['val_' + str(key)] = val_metrics[key]
+    #logger_single_value["val_map"] = val_metrics["map"].item()
+    #logger_single_value["val_loss"] = val_metrics["loss"]
     return logger_single_value
-
-def train_one_epoch_v2(
-        model: torch.nn.Module,
-        optimizer: torch.optim.Optimizer,
-        trainloader: torch.utils.data.DataLoader,
-        device: torch.device
-    ):
-    """Train one epoch."""
-    model = model.to(device)
-    logger = defaultdict(list)    
-
-    # TRAIN
-    model.train()
-    train_sum_loss = 0
-    for i, (images, labels) in enumerate(trainloader):
-        # Load batch in GPU
-        images = list(image.to(device) for image in images)
-        labels = [{k: v.to(device) for k, v in t.items()} for t in labels]
-
-        # Optimize
-        optimizer.zero_grad()
-        loss_dict = model(images, labels)
-        loss = sum(loss for loss in loss_dict.values())
-        train_sum_loss += loss.item()
-        if not math.isfinite(loss):
-            print(f"Infinite loss: {loss.item()}. Terminated")
-            sys.exit(1)
-        loss.backward()
-        optimizer.step()
-    train_sum_loss = train_sum_loss / (i+1)
-    logger['train_loss'] = train_sum_loss    
-    
-    return logger
-
 
 def train(model: torch.nn.Module,
           filepath_to_save: str, 
