@@ -59,9 +59,9 @@ def train_one_epoch(
             logger[k].append(v.item())
 
     # Evaluate on validation dataset
-    model = model.to("cpu")
-    val_metrics = evaluate_dataloader(model, valloader)
+    val_metrics = evaluate_dataloader(model, valloader, device)
     logger["val_map"] = val_metrics["map"].item()
+    logger["val_loss"] = val_metrics["loss"]
     return logger
 
 def train_one_epoch_v2(
@@ -143,6 +143,6 @@ def train(model: torch.nn.Module,
     # Save model checkpoint
     # TODO: pass checkpoint path as cfg parameter.
     torch.save(model.state_dict(), filepath_to_save)
-    print("Model saved to model.pth")
+    print(f"Model saved to {filepath_to_save}")
     print("*** End of training")
     return logger

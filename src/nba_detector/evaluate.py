@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
@@ -7,21 +8,21 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 def update_metric(metric:MeanAveragePrecision(), preds:list, targets:list) -> dict:
     """
     metric: An instance of MeanAveragePrecision()
-    preds (List): 
-    A list consisting of dictionaries each containing the key-values (each dictionary corresponds to a single image). 
+    preds (List):
+    A list consisting of dictionaries each containing the key-values (each dictionary corresponds to a single image).
     Parameters that should be provided per dict
-    boxes: (FloatTensor) of shape (num_boxes, 4) containing num_boxes detection boxes of the format specified in the constructor. 
+    boxes: (FloatTensor) of shape (num_boxes, 4) containing num_boxes detection boxes of the format specified in the constructor.
         By default, this method expects (xmin, ymin, xmax, ymax) in absolute image coordinates.
     scores: FloatTensor of shape (num_boxes) containing detection scores for the boxes.
     labels: IntTensor of shape (num_boxes) containing 0-indexed detection classes for the boxes.
     masks: bool of shape (num_boxes, image_height, image_width) containing boolean masks. Only required when iou_type=”segm”.
 
-    targets (List): A list consisting of dictionaries each containing the key-values (each dictionary corresponds to a single image). 
+    targets (List): A list consisting of dictionaries each containing the key-values (each dictionary corresponds to a single image).
     Parameters that should be provided per dict:
-        boxes: FloatTensor of shape (num_boxes, 4) containing num_boxes ground truth boxes of the format specified in the constructor. 
+        boxes: FloatTensor of shape (num_boxes, 4) containing num_boxes ground truth boxes of the format specified in the constructor.
             By default, this method expects (xmin, ymin, xmax, ymax) in absolute image coordinates.
         labels: IntTensor of shape (num_boxes) containing 0-indexed ground truth classes for the boxes.
-    
+
     Returns:
         metric: An updated instance of MeanAveragePrecision()
     """
@@ -35,12 +36,12 @@ def update_metric_on_batch(metric:MeanAveragePrecision(), model:torch.nn.Module,
     image_batch: A batch of images of type torch.Tensor
     targets: A list of dictionaries corresponding to per-image targets.
         Each dictionary would have the following keys:
-        boxes: FloatTensor of shape (num_boxes, 4) containing num_boxes ground truth boxes of the format specified in the constructor. 
+        boxes: FloatTensor of shape (num_boxes, 4) containing num_boxes ground truth boxes of the format specified in the constructor.
             By default, this method expects (xmin, ymin, xmax, ymax) in absolute image coordinates.
         labels: IntTensor of shape (num_boxes) containing 0-indexed ground truth classes for the boxes.
 
     Returns:
-        metric: An updated instance of MeanAveragePrecision()    
+        metric: An updated instance of MeanAveragePrecision()
     """
     assert(len(image_batch)==len(targets)), "Size mismatch in Batch size and length of target list {} != {}".format(len(image_batch),len(targets))
     model.eval()
@@ -49,7 +50,7 @@ def update_metric_on_batch(metric:MeanAveragePrecision(), model:torch.nn.Module,
         update_metric(metric,preds,targets)
     return metric
 
-def update_metric_on_dataloader(metric:MeanAveragePrecision(), model:torch.nn.Module, dataloader:torch.utils.data.DataLoader) -> dict:
+def update_metric_on_dataloader(metric:MeanAveragePrecision(), model:torch.nn.Module, dataloader:torch.utils.data.DataLoader, device: torch.device) -> dict:
     """
     metric: An instance of MeanAveragePrecision()
     model: A PyTorch model of type torch.nn.Module returned from create_model.py
@@ -59,13 +60,20 @@ def update_metric_on_dataloader(metric:MeanAveragePrecision(), model:torch.nn.Mo
         metric: An updated instance of MeanAveragePrecision()
     """
     model.eval()
+    losses = []
     with torch.no_grad():
         for i, (image_batch,targets) in enumerate(dataloader):
+            image_batch = list(image.to(device) for image in image_batch)
+            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            model.train()
+            loss_dict = model(image_batch, targets)
+            model.eval()
+            losses.append(sum(loss for loss  in loss_dict.values()))
             update_metric_on_batch(metric,model,image_batch,targets)
 
-    return metric
-    
-def evaluate_dataloader(model:torch.nn.Module, dataloader:torch.utils.data.DataLoader) -> dict : 
+    return np.mean(losses)
+
+def evaluate_dataloader(model:torch.nn.Module, dataloader:torch.utils.data.DataLoader, device: torch.device) -> dict :
     """
     model: A PyTorch model of type torch.nn.Module returned from create_model.py
     dataloader: An instance of torch.data.utils.Dataloader
@@ -88,17 +96,18 @@ def evaluate_dataloader(model:torch.nn.Module, dataloader:torch.utils.data.DataL
         mar_100_per_class: (Tensor) (-1 if class metrics are disabled)
     """
     metric = MeanAveragePrecision(iou_type = 'bbox', class_metrics = True)
-    update_metric_on_dataloader(metric,model,dataloader)
+    val_loss = update_metric_on_dataloader(metric,model,dataloader, device)
     mAP_dict = metric.compute()
+    mAP_dict['loss'] = val_loss
     return mAP_dict
 
-def evaluate_batch(model:torch.nn.Module, image_batch:torch.Tensor, targets:list) -> dict :
+def evaluate_batch(model:torch.nn.Module, image_batch:torch.Tensor, targets:list, device: torch.device) -> dict :
     """
     model: A PyTorch model of type torch.nn.Module returned from create_model.py
     image_batch: A batch of images of type torch.Tensor
     targets: A list of dictionaries corresponding to per-image targets.
         Each dictionary would have the following keys:
-        boxes: FloatTensor of shape (num_boxes, 4) containing num_boxes ground truth boxes of the format specified in the constructor. 
+        boxes: FloatTensor of shape (num_boxes, 4) containing num_boxes ground truth boxes of the format specified in the constructor.
             By default, this method expects (xmin, ymin, xmax, ymax) in absolute image coordinates.
         labels: IntTensor of shape (num_boxes) containing 0-indexed ground truth classes for the boxes.
 
@@ -121,13 +130,13 @@ def evaluate_batch(model:torch.nn.Module, image_batch:torch.Tensor, targets:list
     """
 
     metric = MeanAveragePrecision(iou_type = 'bbox', class_metrics = True)
-    update_metric_on_batch(metric, model, image_batch, targets)
+    update_metric_on_batch(metric, model, image_batch, targets, device)
     mAP_dict = metric.compute()
     return mAP_dict
-    
+
 
 if __name__ == "__main__":
-    
+
     from create_model import get_model_fasterrcnn
 
     model = get_model_fasterrcnn(num_classes=3)
