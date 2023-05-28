@@ -29,7 +29,8 @@ def train_one_epoch(
         optimizer: torch.optim.Optimizer,
         trainloader: torch.utils.data.DataLoader,
         valloader: torch.utils.data.DataLoader,
-        device: torch.device, epoch: int
+        device: torch.device, 
+        epoch: int
     ):
     """Train one epoch."""
     model = model.to(device)
@@ -100,7 +101,8 @@ def train_one_epoch_v2(
 
 def train(model: torch.nn.Module,
           filepath_to_save: str, 
-          trainset: torch.utils.data.Dataset, 
+          trainset: torch.utils.data.Dataset,
+          valset: torch.utils.data.Dataset,
           num_epochs: int = 1,
           batch_size:int = 8):
     trainloader = torch.utils.data.DataLoader(
@@ -109,18 +111,16 @@ def train(model: torch.nn.Module,
         shuffle=True, 
         num_workers=1, 
         drop_last=False,
-        collate_fn=collate_fn
-    )
-    """
+        collate_fn=collate_fn)
     valloader = torch.utils.data.DataLoader(
         valset, 
         batch_size=batch_size, 
         shuffle=False, 
         num_workers=1, 
-        drop_last=True,
+        drop_last=False,
         collate_fn=collate_fn
     )
-    """
+    
 
     assert filepath_to_save.endswith(".pth"), f"filepath_to_save has to end with .pth"
 
@@ -131,7 +131,7 @@ def train(model: torch.nn.Module,
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     logger = defaultdict(list)
     for i in tqdm(range(num_epochs)):
-        epoch_logs = train_one_epoch_v2(model, optimizer, trainloader, device)
+        epoch_logs = train_one_epoch(model, optimizer, trainloader, valloader, device, i)
         # lr_scheduler.step()
         # Update Logs
         for k,v in epoch_logs.items():
