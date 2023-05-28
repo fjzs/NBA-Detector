@@ -14,13 +14,13 @@ def get_transformation(format:str = "pascal_voc") -> A.Compose:
         raise ValueError(f"Format not recognized, it was sent {format}")
     
     transformation = A.Compose([
-        A.HorizontalFlip(p=0.5),
-        ToTensorV2()
-    ], bbox_params=A.BboxParams(format=format, label_fields=['bounding_box_labels']))
+        A.HorizontalFlip(p=1),
+        ToTensorV2()            
+    ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
 
     return transformation
 
-"""
+
 def show(sample):
     import matplotlib.pyplot as plt
     from torchvision.transforms.v2 import functional as F
@@ -62,9 +62,8 @@ if __name__ == "__main__":
         ToTensorV2()
     ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
 
-    train_dataset = BasketballDataset(root_dir=PATH_TO_DATASET, transform=transformation, image_set='train')
+    train_dataset = BasketballDataset(root_dir=PATH_TO_DATASET, transform=None, image_set='train')
     print(f"len of dataset is {len(train_dataset)}")
     image, targets = train_dataset[0]
     show((image, targets)) # run in debug to show the plot
     x = 0
-"""

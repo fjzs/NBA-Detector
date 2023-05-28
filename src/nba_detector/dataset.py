@@ -2,9 +2,11 @@ import os
 import xml.etree.ElementTree as ET
 from PIL import Image
 import albumentations as A
+from albumentations.pytorch import ToTensorV2
 from collections import defaultdict
 import numpy as np
 from roboflow import Roboflow
+import torch
 from torch import Tensor, LongTensor
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import pil_to_tensor
@@ -98,24 +100,29 @@ class BasketballDataset(Dataset):
 
         img_path = self.image_ids[index] + BasketballDataset.JPG_EXTENSION
         ann_path = self.image_ids[index] + BasketballDataset.XML_EXTENSION
-        image = Image.open(img_path).convert('RGB') # This is PIL Image
-        image = pil_to_tensor(image) # This is a Tensor now
+        pil_image = Image.open(img_path).convert('RGB') # This is PIL Image
         targets = self._get_annotations(ann_path)
+        
         if self.transform:
-            # Albumentations expects np.ndarray
-            image_np = image.numpy()
+            # Albumentations expects np.ndarray of shape (H,W,C)
+            image_np = np.asarray(pil_image) # This is a numpy array of shape (H, W, C)
             # the parameter 'bounding_box_labels' in self.transform has to have the same name as when defined in
             # the compose function. For example:
-            #    transformation = A.Compose([
+            #transformation = A.Compose([
             #        A.HorizontalFlip(p=1),
             #        ToTensorV2()
-            #    ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
-            transformed = self.transform(image=image_np, bboxes=targets["boxes"], bounding_box_labels=targets['labels'])
+            #    ], 
+            #    bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
+            transformed = self.transform(image=image_np, bboxes= targets["boxes"], bounding_box_labels=targets['labels'])
             image = transformed['image']
-
             # Transform the boxes to Tensors, because they are retrieved as list of tuples
             targets["boxes"] = Tensor(transformed['bboxes'])
+        else:
+            # If there was no transform, we need to transform the image to tensor (C,H,W)
+            image = pil_to_tensor(pil_image) # This is a Tensor now of shape (C,H,W)
         
+        print(f"image type is: {type(image)}")
+        print(f"image shape is: {image.shape}")
         return image, targets
 
     def _get_annotations(self, xml_file_path: str) -> defaultdict[Tensor]:
@@ -164,13 +171,16 @@ class BasketballDataset(Dataset):
         return targets
 
 
-def load_data(folder_name: str, dataset_type: str = 'voc'):
+def load_data(folder_name: str, train_transform: A.Compose = None, dataset_type: str = 'voc'):
     """Load the dataset from specified folder
 
     Parameters
     ----------
     folder_name : str
-        Path to root directory containing the dataset    
+        Path to root directory containing the dataset
+    train_transform: A.Compose object
+        Comes from Albumentations
+    dataset_type: 'voc'
 
     Returns
     -------
@@ -205,7 +215,7 @@ def load_data(folder_name: str, dataset_type: str = 'voc'):
             test_ann_file), "No annotations file in test folder"
 
     # Load data
-    train_dataset = BasketballDataset(root_dir=folder_name, image_set='train')
+    train_dataset = BasketballDataset(root_dir=folder_name, transform=train_transform, image_set='train')
     val_dataset = BasketballDataset(root_dir=folder_name, image_set='valid')
     test_dataset = BasketballDataset(root_dir=folder_name, image_set='test')
 
