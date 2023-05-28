@@ -1,7 +1,6 @@
 import torch
 from src.nba_detector.visualization import CLASS_COLORS, drawrect
 import cv2
-import pandas as pd
 import os
 import yaml
 from src.nba_detector.create_model import get_model
@@ -20,12 +19,6 @@ def apply(model, dataloader, folder_to_save, split):
     """
 
     assert split in ["train", "val", "test"]
-
-    # Data to gather to fill in a df
-    img_ids = []
-    tps = []
-    fps = []
-    fns = []
 
     if not os.path.exists(folder_to_save):
         os.makedirs(folder_to_save)
@@ -56,32 +49,22 @@ def apply(model, dataloader, folder_to_save, split):
             image = images[i]
             gt = labels[i]
             pred = predictions[i]
-            tp, tn, fp, fn, vis_image = analyze_single_image(image, gt, pred)
-            id_name = str(id).zfill(4)
-            img_ids.append(id_name)
-            tps.append(tp)
-            fps.append(fp)
-            fns.append(fn)
+            vis_image = draw_gt_pred_boxes(image, gt, pred)
+            id_name = str(id).zfill(4)            
 
             # Save the image
             image_path = os.path.join(split_folder, id_name + '.jpg')
             vis_image = cv2.cvtColor(vis_image, cv2.COLOR_RGB2BGR)
-            if not cv2.imwrite(image_path, vis_image):
-                print(f"Warning: image {image_path} was not saved!")
+            if cv2.imwrite(image_path, vis_image):
+                print(f"\tSaved image: {image_path}")
+            else:
+                print(f"\tWarning: image {image_path} was not saved!")
             id += 1
-    
-    # Assemble the df
-    data = {"img_id": img_ids, 
-            "tp": tps, 
-            "fp": fps, 
-            "fn": fns}
-    df = pd.DataFrame(data)
-    df.to_csv(os.path.join(split_folder, 'df_' + split + '.csv'))
-    print(f"df saved!")
 
 
 
-def analyze_single_image(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor, MIN_PRED_SCORE=0.5):
+
+def draw_gt_pred_boxes(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor, MIN_PRED_SCORE=0.5):
     """
 
     Args:
@@ -115,9 +98,6 @@ def analyze_single_image(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tens
     gt_boxes = gt['boxes'].detach().clone().tolist()
     gt_labels = gt['labels'].detach().clone().tolist()
 
-    # Calculate TP, TN, FP, FN
-    tp, tn, fp, fn = calculate_tp_tn_fp_fn(gt_boxes, pred_boxes)
-
     # Draw predicted boxes
     for i in pred_indices:
         x_min, y_min, x_max, y_max = pred_boxes[i]
@@ -136,9 +116,7 @@ def analyze_single_image(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tens
         color = CLASS_COLORS[label_id]
         vis_image = cv2.rectangle(vis_image, point1, point2, color, thickness=4)
     
-    return tp, tn, fp, fn, vis_image
-
-
+    return vis_image
 
 
 
@@ -240,6 +218,7 @@ def calculate_tp_tn_fp_fn(gt_boxes: list, pred_boxes: list, iou_threshold=0.5):
 
     return tp, tn, fp, fn
 
+
 def main():
     #--------- Config -------------#
     config_file = './config.yaml'
@@ -258,7 +237,8 @@ def main():
     # Load Model
     print(f"Loading model...")
     model = get_model()
-    model.load_state_dict(torch.load(MODEL_PATH))
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device(device)))
     model.eval()
 
     # Load dataset
