@@ -28,7 +28,7 @@ def main():
 
     print("Training model...")
     modelpath = MODEL_NAME + ".pth"
-    logs = train(model, modelpath, trainset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+    logs = train(model, modelpath, trainset, valset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
 
     # Save the logs to a df
     df = pd.DataFrame.from_dict(logs)
