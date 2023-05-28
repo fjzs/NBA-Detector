@@ -6,14 +6,14 @@ import torchvision
 import torchinfo
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
-def get_model(model_name:str = "fasterrcnn", num_classes:int = 3, trainable_backbone_layers:int=3) -> torch.nn.Module:
+def get_model(model_name:str = "fasterrcnn", num_classes:int = 4, trainable_backbone_layers:int=5) -> torch.nn.Module:
     """Creates a movel specified by its name and the number of classes
 
     Args:
     - model_name: pick one of ["fasterrcnn" (VOC format)]
     - num_classes: 1 (background) + non-background classes to predict
     - trainable_backbone_layers: number of trainable (not frozen) layers starting from final block.
-            Valid values are between 0 and 5, with 5 meaning all backbone layers are trainable. Default is 3.
+            Valid values are between 0 and 5, with 5 meaning all backbone layers are trainable.
 
     Returns:
         torch.nn.Module: torch model
