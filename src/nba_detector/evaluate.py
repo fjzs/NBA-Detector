@@ -71,6 +71,9 @@ def update_metric_on_dataloader(metric:MeanAveragePrecision(), model:torch.nn.Mo
             losses.append(sum(loss for loss  in loss_dict.values()))
             update_metric_on_batch(metric,model,image_batch,targets)
 
+    if device == torch.device('cuda'):
+        losses = [x.cpu() for x in losses]
+
     return np.mean(losses)
 
 def evaluate_dataloader(model:torch.nn.Module, dataloader:torch.utils.data.DataLoader, device: torch.device) -> dict :

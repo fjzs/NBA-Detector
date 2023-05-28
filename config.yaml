@@ -1,9 +1,9 @@
 train:
-  dataset_path: "./../Datasets/v3"
-  trainable_layers: 5 # 0 all frozen, 5 all non-frozen
-  epochs: 50
-  batch_size: 8
-  model_name: "my_name"
+  dataset_path: "./../Datasets/v1"
+  trainable_layers: 1 # 0 all frozen, 5 all non-frozen
+  epochs: 2
+  batch_size: 4
+  model_name: "my_test"
 
 error_analysis:
   model_path: "./../m_v3_50e.pth"

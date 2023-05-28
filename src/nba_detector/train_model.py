@@ -3,6 +3,7 @@ import torch
 from tqdm import tqdm
 import math
 import sys
+import numpy as np
 
 from src.nba_detector.evaluate import evaluate_dataloader
 #from evaluate import evaluate_dataloader
@@ -37,12 +38,11 @@ def train_one_epoch(
     model.train()
 
     print_freq = 4
-    logger = defaultdict(list)
+    logger_list = defaultdict(list) # for each key provides a list of values
     for i, (images, labels) in tqdm(enumerate(trainloader), desc=f"Epoch {epoch:02d}: Batches"):
         images = list(image.to(device) for image in images)
         labels = [{k: v.to(device) for k, v in t.items()} for t in labels]
-        # print([{k: v.shape for k,v in t.items()} for t in labels])
-
+        
         optimizer.zero_grad()
         loss_dict = model(images, labels)
         loss = sum(loss for loss in loss_dict.values())
@@ -57,13 +57,20 @@ def train_one_epoch(
             print(f"Epoch {epoch}: Batch {i}: mean_loss={loss.item()}", {k: v.item() for k,v in loss_dict.items()})
             # print(f"Epoch {epoch}: Batch {i}:", loss.item())
         for k,v in loss_dict.items():
-            logger[k].append(v.item())
+            logger_list[k].append(v.item())
+
+    # Compute a single value in training 
+    logger_single_value = defaultdict(list)
+    for k in logger_list:
+        values = logger_list[k]
+        avg = np.mean(values)
+        logger_single_value[k] = avg
 
     # Evaluate on validation dataset
     val_metrics = evaluate_dataloader(model, valloader, device)
-    logger["val_map"] = val_metrics["map"].item()
-    logger["val_loss"] = val_metrics["loss"]
-    return logger
+    logger_single_value["val_map"] = val_metrics["map"].item()
+    logger_single_value["val_loss"] = val_metrics["loss"]
+    return logger_single_value
 
 def train_one_epoch_v2(
         model: torch.nn.Module,

@@ -2,7 +2,6 @@ from src.nba_detector.train_model import train
 from src.nba_detector.create_model import get_model
 from src.nba_detector.dataset import load_data
 import pandas as pd
-import torch.utils.data
 import yaml
 
 
@@ -28,12 +27,14 @@ def main():
 
     print("Training model...")
     modelpath = MODEL_NAME + ".pth"
-    logs = train(model, modelpath, trainset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+    logs = train(model, modelpath, trainset, valset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+    print(logs)
 
     # Save the logs to a df
     df = pd.DataFrame.from_dict(logs)
-    df.to_csv("logs.csv")
-    print(f"Logs saved to logs.csv")    
+    filename = "log_" + MODEL_NAME + ".csv"
+    df.to_csv(filename)
+    print(f"Logs saved to {filename}")    
 
 
 if __name__ == '__main__':
