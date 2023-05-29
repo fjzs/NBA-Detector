@@ -62,8 +62,6 @@ def apply(model, dataloader, folder_to_save, split):
             id += 1
 
 
-
-
 def draw_gt_pred_boxes(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor, MIN_PRED_SCORE=0.5):
     """
 
@@ -105,7 +103,7 @@ def draw_gt_pred_boxes(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor
         point2 = (int(x_max), int(y_max))
         label_id = pred_labels[i].item()
         color = CLASS_COLORS[label_id]
-        drawrect(vis_image, point1, point2, color, thickness=4, style='dotted')
+        drawrect(vis_image, point1, point2, color, thickness=3, style='dotted')
     
     # Draw ground truth boxes
     for i in range(len(gt_boxes)):
@@ -114,7 +112,7 @@ def draw_gt_pred_boxes(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor
         point2 = (int(x_max), int(y_max))
         label_id = gt_labels[i]
         color = CLASS_COLORS[label_id]
-        vis_image = cv2.rectangle(vis_image, point1, point2, color, thickness=4)
+        vis_image = cv2.rectangle(vis_image, point1, point2, color, thickness=3)
     
     return vis_image
 
@@ -244,9 +242,9 @@ def main():
     # Load dataset
     print(f"Loading dataset...")   
     trainset, valset, testset = load_data(DATASET_PATH)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
-    valloader = torch.utils.data.DataLoader(valset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
+    valloader = torch.utils.data.DataLoader(valset, batch_size=4, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
 
     if APPLY_TO_TRAIN:
         print(f"\nApplying to train...")

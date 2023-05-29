@@ -72,11 +72,7 @@ def train_one_epoch(
         logger_single_value['val_' + str(key)] = val_metrics[key]
     #logger_single_value["val_map"] = val_metrics["map"].item()
     #logger_single_value["val_loss"] = val_metrics["loss"]
-    train_loss = logger_single_value['loss_classifier']
-    + logger_single_value['loss_box_reg'] 
-    + logger_single_value['loss_objectness'] 
-    + logger_single_value['loss_rpn_box_reg']
-
+    train_loss = logger_single_value['loss_classifier'] + logger_single_value['loss_box_reg'] + logger_single_value['loss_objectness'] + logger_single_value['loss_rpn_box_reg']
     print(f"\ntrain_loss: {round(train_loss,4)}, val_loss: {round(logger_single_value['val_loss'],4)}")
     return logger_single_value
 
