@@ -99,7 +99,7 @@ def evaluate_dataloader(model:torch.nn.Module, dataloader:torch.utils.data.DataL
         mar_100_per_class: (Tensor) (-1 if class metrics are disabled)
     """
     metric = MeanAveragePrecision(iou_type = 'bbox', class_metrics = True)
-    val_loss = update_metric_on_dataloader(metric,model,dataloader, device)
+    val_loss = update_metric_on_dataloader(metric, model, dataloader, device)
     mAP_dict = metric.compute()
     
     # I'm going to return only a set of metrics
@@ -108,7 +108,8 @@ def evaluate_dataloader(model:torch.nn.Module, dataloader:torch.utils.data.DataL
     subset_metrics["loss"] = val_loss
     map_per_class = mAP_dict['map_per_class'].tolist()
     for i, x in enumerate(map_per_class):
-        subset_metrics['map_per_class_' + str(i+1)] = x
+        if x >= 0: # sometimes it retuns a -1
+            subset_metrics['map_per_class_' + str(i+1)] = x
 
     return subset_metrics
 

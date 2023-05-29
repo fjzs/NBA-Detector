@@ -60,18 +60,18 @@ def train_one_epoch(
 
     # Compute a single value in training 
     logger_single_value = defaultdict(list)
+    train_loss = 0
     for k in logger_list:
         values = logger_list[k]
         avg = np.mean(values)
+        train_loss += avg
         logger_single_value[k] = avg
+    logger_single_value['train_loss'] = train_loss
 
     # Evaluate on validation dataset
     val_metrics = evaluate_dataloader(model, valloader, device)
     for key in val_metrics:
         logger_single_value['val_' + str(key)] = val_metrics[key]
-    #logger_single_value["val_map"] = val_metrics["map"].item()
-    #logger_single_value["val_loss"] = val_metrics["loss"]
-    train_loss = logger_single_value['loss_classifier'] + logger_single_value['loss_box_reg'] + logger_single_value['loss_objectness'] + logger_single_value['loss_rpn_box_reg']
     val_loss = logger_single_value['val_loss']
     val_map = logger_single_value['val_map']
     print(f"\n\t\ttrain_loss: {round(train_loss,3)}, val_loss: {round(val_loss,3)}, val_map: {round(val_map,3)}")
