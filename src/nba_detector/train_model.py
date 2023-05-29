@@ -53,8 +53,8 @@ def train_one_epoch(
         optimizer.step()
 
         # Logging
-        if (i>0 and i % print_freq == 0) or (i == len(trainloader) - 1) :
-            print(f"Epoch {epoch}: Batch {i}: mean_loss={loss.item()}", {k: v.item() for k,v in loss_dict.items()})
+        #if (i>0 and i % print_freq == 0) or (i == len(trainloader) - 1) :
+            #print(f"Epoch {epoch}: Batch {i}: mean_loss={loss.item()}", {k: v.item() for k,v in loss_dict.items()})
             # print(f"Epoch {epoch}: Batch {i}:", loss.item())
         for k,v in loss_dict.items():
             logger_list[k].append(v.item())
@@ -72,6 +72,12 @@ def train_one_epoch(
         logger_single_value['val_' + str(key)] = val_metrics[key]
     #logger_single_value["val_map"] = val_metrics["map"].item()
     #logger_single_value["val_loss"] = val_metrics["loss"]
+    train_loss = logger_single_value['loss_classifier']
+    + logger_single_value['loss_box_reg'] 
+    + logger_single_value['loss_objectness'] 
+    + logger_single_value['loss_rpn_box_reg']
+
+    print(f"\ttrain_loss: {round(train_loss,4)}, val_loss: {round(logger_single_value['val_loss'],4)}")
     return logger_single_value
 
 def train(model: torch.nn.Module,
