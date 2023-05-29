@@ -30,8 +30,7 @@ def train_one_epoch(
         optimizer: torch.optim.Optimizer,
         trainloader: torch.utils.data.DataLoader,
         valloader: torch.utils.data.DataLoader,
-        device: torch.device, 
-        epoch: int
+        device: torch.device
     ):
     """Train one epoch."""
     model = model.to(device)
@@ -73,7 +72,9 @@ def train_one_epoch(
     #logger_single_value["val_map"] = val_metrics["map"].item()
     #logger_single_value["val_loss"] = val_metrics["loss"]
     train_loss = logger_single_value['loss_classifier'] + logger_single_value['loss_box_reg'] + logger_single_value['loss_objectness'] + logger_single_value['loss_rpn_box_reg']
-    print(f"\ntrain_loss: {round(train_loss,4)}, val_loss: {round(logger_single_value['val_loss'],4)}")
+    val_loss = logger_single_value['val_loss']
+    val_map = logger_single_value['val_map']
+    print(f"\n\t\ttrain_loss: {round(train_loss,3)}, val_loss: {round(val_loss,3)}, val_map: {round(val_map,3)}")
     return logger_single_value
 
 def train(model: torch.nn.Module,
@@ -96,19 +97,27 @@ def train(model: torch.nn.Module,
         num_workers=1, 
         drop_last=False,
         collate_fn=collate_fn
-    )
-    
+    )    
 
     assert filepath_to_save.endswith(".pth"), f"filepath_to_save has to end with .pth"
 
     # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+    optimizer = torch.optim.Adam(params, lr=0.005)
+    #lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     logger = defaultdict(list)
+    best_valMAP = 0
     for i in tqdm(range(num_epochs)):
-        epoch_logs = train_one_epoch(model, optimizer, trainloader, valloader, device, i)
+        epoch_logs = train_one_epoch(model, optimizer, trainloader, valloader, device)
+
+        valMAP = epoch_logs['val_map']
+        if valMAP > best_valMAP:
+            best_valMAP = valMAP
+            print(f"\t\t*** Best valMAP so far of {best_valMAP}, saving model...")
+            torch.save(model.state_dict(), filepath_to_save)
+
         # lr_scheduler.step()
         # Update Logs
         for k,v in epoch_logs.items():
@@ -116,10 +125,6 @@ def train(model: torch.nn.Module,
                 logger[k].extend(v)
             else:
                 logger[k].append(v)
-
-    # Save model checkpoint
-    # TODO: pass checkpoint path as cfg parameter.
-    torch.save(model.state_dict(), filepath_to_save)
-    print(f"Model saved to {filepath_to_save}")
+    
     print("*** End of training")
     return logger

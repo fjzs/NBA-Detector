@@ -1,9 +1,9 @@
 train:
   dataset_path: "./../Datasets/v1"
   trainable_layers: 1 # 0 all frozen, 5 all non-frozen
-  epochs: 3
+  epochs: 5
   batch_size: 4
-  model_name: "my_test"
+  model_name: "testing"
 
 # put the probability to incorporate each transformation.
 # Only 1 transformation is going to be picked (at random) for any example
