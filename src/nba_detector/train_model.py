@@ -39,7 +39,7 @@ def train_one_epoch(
 
     print_freq = 4
     logger_list = defaultdict(list) # for each key provides a list of values
-    for i, (images, labels) in tqdm(enumerate(trainloader), desc=f"Epoch {epoch:02d}: Batches"):
+    for i, (images, labels) in enumerate(trainloader):
         images = list(image.to(device) for image in images)
         labels = [{k: v.to(device) for k, v in t.items()} for t in labels]
         
@@ -77,7 +77,7 @@ def train_one_epoch(
     + logger_single_value['loss_objectness'] 
     + logger_single_value['loss_rpn_box_reg']
 
-    print(f"\ttrain_loss: {round(train_loss,4)}, val_loss: {round(logger_single_value['val_loss'],4)}")
+    print(f"\ntrain_loss: {round(train_loss,4)}, val_loss: {round(logger_single_value['val_loss'],4)}")
     return logger_single_value
 
 def train(model: torch.nn.Module,
