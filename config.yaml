@@ -23,6 +23,7 @@ transformations:
 
 error_analysis:
   model_path: "./../m_v4_30e_HF50.pth"
+  model_name: "retinanet"
   dataset_path: "./../Datasets/v1"
   apply_to_train: True
   apply_to_valid: False

@@ -222,21 +222,22 @@ def main():
     #--------- Config -------------#
     config_file = './config.yaml'
     with open(config_file) as cf_file:
-        config = yaml.safe_load(cf_file.read())
-        print(f"\nConfig file is:\n{config['error_analysis']}\n")
+        config = yaml.safe_load(cf_file.read())['error_analysis']
+        print(f"\nConfig file is:\n{config}\n")
 
-    MODEL_PATH = config['error_analysis']['model_path']
-    DATASET_PATH = config['error_analysis']['dataset_path']
-    APPLY_TO_TRAIN = config['error_analysis']['apply_to_train']
-    APPLY_TO_VALID = config['error_analysis']['apply_to_valid']
-    APPLY_TO_TEST = config['error_analysis']['apply_to_test']
-    FOLDER_NAME = config['error_analysis']['folder_name']
-    USE_TRANSFORMATION = config['error_analysis']['transformation']
+    MODEL_PATH = config['model_path']
+    MODEL_NAME = config['model_name']
+    DATASET_PATH = config['dataset_path']
+    APPLY_TO_TRAIN = config['apply_to_train']
+    APPLY_TO_VALID = config['apply_to_valid']
+    APPLY_TO_TEST = config['apply_to_test']
+    FOLDER_NAME = config['folder_name']
+    USE_TRANSFORMATION = config['transformation']
     #-------------------------------#
     
     # Load Model
     print(f"Loading model...")
-    model = get_model()
+    model = get_model(MODEL_NAME)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device(device)))
     model.eval()
