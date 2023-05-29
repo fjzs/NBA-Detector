@@ -20,7 +20,7 @@ def get_transformation(format:str = "pascal_voc") -> A.Compose:
 
     return transformation
 
-
+"""
 def show(sample):
     import matplotlib.pyplot as plt
     from torchvision.transforms.v2 import functional as F
@@ -38,14 +38,9 @@ def show(sample):
     color_per_class[2] = "blue"
     color_per_class[3] = "yellow"
     color_per_box = [color_per_class[id.item()] for id in target["labels"]]
-    annotated_image = draw_bounding_boxes(image, target["boxes"], colors=color_per_box, width=4)
-    
-    fig, ax = plt.subplots()
-    ax.imshow(annotated_image.permute(1, 2, 0).numpy())
-    ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
-    fig.tight_layout()
-    fig.show()
-
+    annotated_image = draw_bounding_boxes(image, target["boxes"], colors=color_per_box, width=4)    
+    plt.imshow(annotated_image.permute(1, 2, 0).numpy())
+    plt.waitforbuttonpress()
 
 
 if __name__ == "__main__":
@@ -62,8 +57,11 @@ if __name__ == "__main__":
         ToTensorV2()
     ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
 
-    train_dataset = BasketballDataset(root_dir=PATH_TO_DATASET, transform=None, image_set='train')
+    train_dataset = BasketballDataset(root_dir=PATH_TO_DATASET, transform=transformation, image_set='train')
     print(f"len of dataset is {len(train_dataset)}")
-    image, targets = train_dataset[0]
+    image, targets = train_dataset[10]
+    print(image.shape)
+    print(targets)
     show((image, targets)) # run in debug to show the plot
     x = 0
+"""

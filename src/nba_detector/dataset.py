@@ -113,16 +113,34 @@ class BasketballDataset(Dataset):
             #        ToTensorV2()
             #    ], 
             #    bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
-            transformed = self.transform(image=image_np, bboxes= targets["boxes"], bounding_box_labels=targets['labels'])
+            
+
+            # There is a bug in the bounding boxes, some of them come with an x_max > WIDTH or
+            # y_max > HEIGHT, so we are going to trim those bounding boxes here for simplicity
+            number_of_boxes = len(targets['labels'])
+            if number_of_boxes > 0:
+                HEIGHT, WIDTH, _ = image_np.shape
+                height_vector = torch.ones(number_of_boxes) * HEIGHT
+                width_vector = torch.ones(number_of_boxes) * WIDTH
+                # Boxes come in this format: [x_min, y_min, x_max, y_max]
+                
+                # Replace x_max if it is > WIDTH
+                targets["boxes"][:,2] = torch.min(targets["boxes"][:,2], width_vector)
+                
+                # Replace y_max if it is > HEIGHT
+                targets["boxes"][:,3] = torch.min(targets["boxes"][:,3], height_vector)
+            
+            transformed = self.transform(image=  image_np, 
+                                         bboxes = targets["boxes"], 
+                                         bounding_box_labels = targets['labels'])
             image = transformed['image']
             # Transform the boxes to Tensors, because they are retrieved as list of tuples
             targets["boxes"] = Tensor(transformed['bboxes'])
+            
         else:
             # If there was no transform, we need to transform the image to tensor (C,H,W)
             image = pil_to_tensor(pil_image) # This is a Tensor now of shape (C,H,W)
         
-        print(f"image type is: {type(image)}")
-        print(f"image shape is: {image.shape}")
         return image, targets
 
     def _get_annotations(self, xml_file_path: str) -> defaultdict[Tensor]:
