@@ -104,7 +104,7 @@ def draw_gt_pred_boxes(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor
         point2 = (int(x_max), int(y_max))
         label_id = pred_labels[i].item()
         color = CLASS_COLORS[label_id]
-        drawrect(vis_image, point1, point2, color, thickness=3, style='dotted')
+        drawrect(vis_image, point1, point2, color, thickness=2, style='dotted')
     
     # Draw ground truth boxes
     for i in range(len(gt_boxes)):
@@ -113,7 +113,7 @@ def draw_gt_pred_boxes(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor
         point2 = (int(x_max), int(y_max))
         label_id = gt_labels[i]
         color = CLASS_COLORS[label_id]
-        vis_image = cv2.rectangle(vis_image, point1, point2, color, thickness=3)
+        vis_image = cv2.rectangle(vis_image, point1, point2, color, thickness=2)
     
     return vis_image
 
