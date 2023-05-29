@@ -115,7 +115,7 @@ def train(model: torch.nn.Module,
         valMAP = epoch_logs['val_map']
         if valMAP > best_valMAP:
             best_valMAP = valMAP
-            print(f"\t\t*** Best valMAP so far of {best_valMAP}, saving model...")
+            print(f"\t\t*** Best valMAP so far of {round(best_valMAP,3)}, saving model...")
             torch.save(model.state_dict(), filepath_to_save)
 
         # lr_scheduler.step()
