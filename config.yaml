@@ -5,6 +5,9 @@ train:
   batch_size: 4
   model_name: "my_test"
 
+transformations: # put the probability to incorporate it
+  horizontal_flip: 0.5
+
 error_analysis:
   model_path: "./../m_v3_50e.pth"
   dataset_path: "./../Datasets/v1"
