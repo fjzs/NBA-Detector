@@ -6,6 +6,7 @@ import yaml
 from src.nba_detector.create_model import get_model
 from src.nba_detector.dataset import load_data
 from src.nba_detector.train_model import collate_fn
+from src.nba_detector.transformations import get_transformation
 
 
 def apply(model, dataloader, folder_to_save, split):
@@ -230,6 +231,7 @@ def main():
     APPLY_TO_VALID = config['error_analysis']['apply_to_valid']
     APPLY_TO_TEST = config['error_analysis']['apply_to_test']
     FOLDER_NAME = config['error_analysis']['folder_name']
+    USE_TRANSFORMATION = config['error_analysis']['transformation']
     #-------------------------------#
     
     # Load Model
@@ -240,8 +242,14 @@ def main():
     model.eval()
 
     # Load dataset
-    print(f"Loading dataset...")   
-    trainset, valset, testset = load_data(DATASET_PATH)
+    print(f"Loading dataset...")
+    transformation = None
+    if USE_TRANSFORMATION:
+        with open(config_file) as cf_file:
+            config_transformation = yaml.safe_load(cf_file.read())['transformations']
+        transformation = get_transformation(config_transformation)
+
+    trainset, valset, testset = load_data(DATASET_PATH, train_transform=transformation)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
     valloader = torch.utils.data.DataLoader(valset, batch_size=4, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
     testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=1, drop_last=False, collate_fn=collate_fn)
@@ -255,6 +263,7 @@ def main():
     if APPLY_TO_TEST:
         print(f"\nApplying to test...")
         apply(model, testloader, FOLDER_NAME, "test")
+    print("\nAnalysis Done!")
 
 
 if __name__ == "__main__":

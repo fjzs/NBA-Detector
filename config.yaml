@@ -21,10 +21,10 @@ transformations:
   rgbshift: 1
 
 error_analysis:
-  model_path: "./../m_v3_50e.pth"
+  model_path: "./../m_v4_30e_HF50.pth"
   dataset_path: "./../Datasets/v1"
   apply_to_train: True
-  apply_to_valid: True
-  apply_to_test: True
-  folder_name: 'Analysis_mv3_d1'
+  apply_to_valid: False
+  apply_to_test: False
+  folder_name: 'Analysis_test'
   transformation: True # True if to use it in training dataloader
