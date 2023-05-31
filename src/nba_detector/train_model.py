@@ -59,14 +59,14 @@ def train_one_epoch(
             # print(f"Epoch {epoch}: Batch {i}:", loss.item())
         for k,v in loss_dict.items():
             logger[k].append(v.item())
-        logger["train_loss"].append(loss.item())
+        logger["train/loss"].append(loss.item())
 
-    logger["train_loss"] = np.mean(logger["train_loss"])
+    logger["train/loss"] = np.mean(logger["train/loss"])
 
     # Evaluate on validation dataset
     val_metrics = evaluate_dataloader(model, valloader, device)
-    logger["val_map"] = val_metrics["map"]
-    logger["val_loss"] = val_metrics["loss"]
+    logger["val/map"] = val_metrics["map"]
+    logger["val/loss"] = val_metrics["loss"]
     return logger
 
 
@@ -80,9 +80,12 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
         collate_fn=collate_fn
     )
 
+    # Import wandb
+    if config['use_wandb']: import wandb
+
     # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(params, lr=float(config['learning_rate']), momentum=0.9, weight_decay=0.0005)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -99,9 +102,15 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
             else:
                 logger[k].append(v)
 
+        # wandb logging
+        if config['use_wandb']:
+            for k,v in epoch_logs.items():
+                if k.startswith('train') or k.startswith('val'):
+                    wandb.log({k: v}, step=i)
+
         # Save best val model
-        if epoch_logs["val_map"] > best_val_map:
-            best_val_map = epoch_logs["val_map"]
+        if epoch_logs["val/map"] > best_val_map:
+            best_val_map = epoch_logs["val/map"]
             torch.save(model.state_dict(), config['save_model_as'] + "_best_val_map.pt")
 
     # Save model checkpoint

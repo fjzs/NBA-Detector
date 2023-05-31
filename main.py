@@ -17,6 +17,15 @@ def main():
     MODEL_NAME = config['model_name']
     #-------------------------------#
 
+    # Initialize wandb
+    if config['use_wandb'] == True:
+        import wandb
+        wandb.init(
+            project="nba-detector",
+            entity=config['wandb_entity'],
+            config=config,
+        )
+
     print("Loading dataset...")
     trainset, valset, testset = load_data(DATASET_PATH)
 
@@ -26,11 +35,6 @@ def main():
     print("Training model...")
     logs = train(model, trainset, valset, config)
 
-    plt.plot(logs['train_loss'], label='train loss')
-    plt.plot(logs['val_loss'], label='val loss')
-    plt.legend()
-    plt.show()
-    plt.waitforbuttonpress()
 
 if __name__ == '__main__':
     main()
