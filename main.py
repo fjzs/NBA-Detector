@@ -14,10 +14,7 @@ def main():
 
     DATASET_PATH = config['dataset_path']
     TRAINABLE_LAYERS = config['trainable_layers']
-    NUM_EPOCHS = config['epochs']
-    BATCH_SIZE = config['batch_size']
     MODEL_NAME = config['model_name']
-    MODEL_SAVE_AS = config['save_model_as']
     #-------------------------------#
 
     print("Loading dataset...")
@@ -27,8 +24,7 @@ def main():
     model = get_model(MODEL_NAME, trainable_backbone_layers=TRAINABLE_LAYERS)
 
     print("Training model...")
-    modelpath = MODEL_SAVE_AS + ".pth"
-    logs = train(model, trainset, valset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
+    logs = train(model, trainset, valset, config)
 
     plt.plot(logs['train_loss'], label='train loss')
     plt.plot(logs['val_loss'], label='val loss')

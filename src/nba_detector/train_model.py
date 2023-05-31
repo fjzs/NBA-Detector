@@ -70,13 +70,13 @@ def train_one_epoch(
     return logger
 
 
-def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: torch.utils.data.Dataset, num_epochs: int = 1, batch_size: int =2):
+def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: torch.utils.data.Dataset, config: dict):
     trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=batch_size, shuffle=True, num_workers=2, drop_last=True,
+        trainset, batch_size=config['batch_size'], shuffle=True, num_workers=2, drop_last=True,
         collate_fn=collate_fn
     )
     valloader = torch.utils.data.DataLoader(
-        valset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=False,
+        valset, batch_size=config['batch_size'], shuffle=False, num_workers=2, drop_last=False,
         collate_fn=collate_fn
     )
 
@@ -89,7 +89,7 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
 
     logger = defaultdict(list)
     best_val_map = 0.0
-    for i in range(num_epochs):
+    for i in range(config['epochs']):
         epoch_logs = train_one_epoch(model, optimizer, trainloader, valloader, device, i)
         # lr_scheduler.step()
         # Update Logs
@@ -102,10 +102,10 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
         # Save best val model
         if epoch_logs["val_map"] > best_val_map:
             best_val_map = epoch_logs["val_map"]
-            torch.save(model.state_dict(), "model_best_val_map.pt")
+            torch.save(model.state_dict(), config['save_model_as'] + "_best_val_map.pt")
 
     # Save model checkpoint
     # TODO: pass checkpoint path as cfg parameter.
-    torch.save(model.state_dict(), "model.pt")
+    torch.save(model.state_dict(), config['save_model_as'] + ".pt")
     print("*** End of training")
     return logger
