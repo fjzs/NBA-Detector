@@ -1,6 +1,7 @@
 from src.nba_detector.train_model import train
 from src.nba_detector.create_model import get_model
 from src.nba_detector.dataset import load_data
+from src.nba_detector.transformations import get_transformation
 import matplotlib.pyplot as plt
 import yaml
 
@@ -27,7 +28,12 @@ def main():
         )
 
     print("Loading dataset...")
-    trainset, valset, testset = load_data(DATASET_PATH)
+    transformation = None
+    if config['use_transformations']:
+        with open(config_file) as cf_file:
+            config_transformation = yaml.safe_load(cf_file.read())['transformations']
+        transformation = get_transformation(config_transformation)
+    trainset, valset, testset = load_data(DATASET_PATH, train_transform=transformation)
 
     print("Building model...")
     model = get_model(MODEL_NAME, trainable_backbone_layers=TRAINABLE_LAYERS)

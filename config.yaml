@@ -8,6 +8,7 @@ train:
   learning_rate: 5e-3
   use_wandb: True
   wandb_entity: aayushmaan
+  use_transformations: false
 
 # put the probability to incorporate each transformation.
 # Only 1 transformation is going to be picked (at random) for any example
