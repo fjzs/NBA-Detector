@@ -5,7 +5,6 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from collections import defaultdict
 import numpy as np
-from roboflow import Roboflow
 import torch
 from torch import Tensor, LongTensor
 from torch.utils.data import Dataset
@@ -29,6 +28,7 @@ def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> 
     assert type(version_id) == int, f"version_id is not int, it is {version_id}"
     assert 1 <= version_id <= 3, f"version_id has to be >=1 and <=3, it is {version_id}"
 
+    from roboflow import Roboflow
     rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project = rf.workspace("francisco-zenteno-uryfd").project("nba-player-detector")
     project.version(version_id).download(format)
@@ -93,7 +93,7 @@ class BasketballDataset(Dataset):
         image : Tensor
             Image at given index in the dataset as a Tensor
         target : defaultdict[Tensor]
-            Dictionary containing keys boxes, labels, filepath. Value corresponding to boxes is of the form torch.Tensor[torch.Tensor], 
+            Dictionary containing keys boxes, labels, filepath. Value corresponding to boxes is of the form torch.Tensor[torch.Tensor],
             each containing bounding box coordinates in the form of [x0, y0, x1, y1], labels is of the form torch.Tensor, each value
             corresponding to an integer defined by LABEL_MAP constant, and filename is of the form str, specifying filepath of the original image.
         """
@@ -102,7 +102,7 @@ class BasketballDataset(Dataset):
         ann_path = self.image_ids[index] + BasketballDataset.XML_EXTENSION
         pil_image = Image.open(img_path).convert('RGB') # This is PIL Image
         targets = self._get_annotations(ann_path)
-        
+
         if self.transform:
             # Albumentations expects np.ndarray of shape (H,W,C)
             image_np = np.asarray(pil_image) # This is a numpy array of shape (H, W, C)
@@ -111,9 +111,9 @@ class BasketballDataset(Dataset):
             #transformation = A.Compose([
             #        A.HorizontalFlip(p=1),
             #        ToTensorV2()
-            #    ], 
+            #    ],
             #    bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
-            
+
 
             # There is a bug in the bounding boxes, some of them come with an x_max > WIDTH or
             # y_max > HEIGHT, so we are going to trim those bounding boxes here for simplicity
@@ -123,24 +123,24 @@ class BasketballDataset(Dataset):
                 height_vector = torch.ones(number_of_boxes) * HEIGHT
                 width_vector = torch.ones(number_of_boxes) * WIDTH
                 # Boxes come in this format: [x_min, y_min, x_max, y_max]
-                
+
                 # Replace x_max if it is > WIDTH
                 targets["boxes"][:,2] = torch.min(targets["boxes"][:,2], width_vector)
-                
+
                 # Replace y_max if it is > HEIGHT
                 targets["boxes"][:,3] = torch.min(targets["boxes"][:,3], height_vector)
-            
-            transformed = self.transform(image=  image_np, 
-                                         bboxes = targets["boxes"], 
+
+            transformed = self.transform(image=  image_np,
+                                         bboxes = targets["boxes"],
                                          bounding_box_labels = targets['labels'])
             image = transformed['image']
             # Transform the boxes to Tensors, because they are retrieved as list of tuples
             targets["boxes"] = Tensor(transformed['bboxes'])
-            
+
         else:
             # If there was no transform, we need to transform the image to tensor (C,H,W)
             image = pil_to_tensor(pil_image) # This is a Tensor now of shape (C,H,W)
-        
+
         return image, targets
 
     def _get_annotations(self, xml_file_path: str) -> defaultdict[Tensor]:
@@ -154,7 +154,7 @@ class BasketballDataset(Dataset):
         Returns
         -------
         targets : defaultdict[Tensor]
-            Dictionary containing keys boxes, labels, filepath. Value corresponding to boxes is of the form torch.Tensor[torch.Tensor], 
+            Dictionary containing keys boxes, labels, filepath. Value corresponding to boxes is of the form torch.Tensor[torch.Tensor],
             each containing bounding box coordinates in the form of [x0, y0, x1, y1], labels is of the form torch.Tensor, each value
             corresponding to an integer defined by LABEL_MAP constant, and filename is of the form str, specifying filepath of the original image.
         """

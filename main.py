@@ -1,7 +1,7 @@
 from src.nba_detector.train_model import train
 from src.nba_detector.create_model import get_model
 from src.nba_detector.dataset import load_data
-import pandas as pd
+import matplotlib.pyplot as plt
 import yaml
 
 
@@ -15,7 +15,7 @@ def main():
     DATASET_PATH = config['dataset_path']
     TRAINABLE_LAYERS = config['trainable_layers']
     NUM_EPOCHS = config['epochs']
-    BATCH_SIZE = config['batch_size']    
+    BATCH_SIZE = config['batch_size']
     MODEL_NAME = config['model_name']
     MODEL_SAVE_AS = config['save_model_as']
     #-------------------------------#
@@ -28,14 +28,13 @@ def main():
 
     print("Training model...")
     modelpath = MODEL_SAVE_AS + ".pth"
-    logs = train(model, modelpath, trainset, valset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
-    
-    # Save the logs to a df
-    df = pd.DataFrame.from_dict(logs)
-    filename = "log_" + MODEL_SAVE_AS + ".csv"
-    df.to_csv(filename)
-    print(f"Logs saved to {filename}")    
+    logs = train(model, trainset, valset, num_epochs=NUM_EPOCHS, batch_size=BATCH_SIZE)
 
+    plt.plot(logs['train_loss'], label='train loss')
+    plt.plot(logs['val_loss'], label='val loss')
+    plt.legend()
+    plt.show()
+    plt.waitforbuttonpress()
 
 if __name__ == '__main__':
     main()
