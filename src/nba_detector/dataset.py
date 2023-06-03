@@ -2,6 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 from PIL import Image
 import albumentations as A
+from albumentations.pytorch import ToTensorV2
 from collections import defaultdict
 import numpy as np
 from roboflow import Roboflow
@@ -12,7 +13,7 @@ from torchvision.transforms.functional import pil_to_tensor
 from typing import Tuple, List
 
 
-def download_dataset_from_roboflow(format: str = 'voc') -> None:
+def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> None:
     """Download the dataset from Roboflow website using API call
 
         Parameters
@@ -24,9 +25,12 @@ def download_dataset_from_roboflow(format: str = 'voc') -> None:
         -------
         dataset : Dataset
         """
+    assert type(version_id) == int, f"version_id is not int, it is {version_id}"
+    assert 1 <= version_id <= 3, f"version_id has to be >=1 and <=3, it is {version_id}"
+
     rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project = rf.workspace("francisco-zenteno-uryfd").project("nba-player-detector")
-    project.version(1).download(format)
+    project.version(version_id).download(format)
 
 
 class BasketballDataset(Dataset):
@@ -95,23 +99,46 @@ class BasketballDataset(Dataset):
 
         img_path = self.image_ids[index] + BasketballDataset.JPG_EXTENSION
         ann_path = self.image_ids[index] + BasketballDataset.XML_EXTENSION
-        image = Image.open(img_path).convert('RGB') # This is PIL Image
-        image = pil_to_tensor(image) # This is a Tensor now
+        pil_image = Image.open(img_path).convert('RGB') # This is PIL Image
         targets = self._get_annotations(ann_path)
+        
         if self.transform:
-            # Albumentations expects np.ndarray
-            image_np = image.numpy()
+            # Albumentations expects np.ndarray of shape (H,W,C)
+            image_np = np.asarray(pil_image) # This is a numpy array of shape (H, W, C)
             # the parameter 'bounding_box_labels' in self.transform has to have the same name as when defined in
             # the compose function. For example:
-            #    transformation = A.Compose([
+            #transformation = A.Compose([
             #        A.HorizontalFlip(p=1),
             #        ToTensorV2()
-            #    ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
-            transformed = self.transform(image=image_np, bboxes=targets["boxes"], bounding_box_labels=targets['labels'])
-            image = transformed['image']
+            #    ], 
+            #    bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
+            
 
+            # There is a bug in the bounding boxes, some of them come with an x_max > WIDTH or
+            # y_max > HEIGHT, so we are going to trim those bounding boxes here for simplicity
+            number_of_boxes = len(targets['labels'])
+            if number_of_boxes > 0:
+                HEIGHT, WIDTH, _ = image_np.shape
+                height_vector = torch.ones(number_of_boxes) * HEIGHT
+                width_vector = torch.ones(number_of_boxes) * WIDTH
+                # Boxes come in this format: [x_min, y_min, x_max, y_max]
+                
+                # Replace x_max if it is > WIDTH
+                targets["boxes"][:,2] = torch.min(targets["boxes"][:,2], width_vector)
+                
+                # Replace y_max if it is > HEIGHT
+                targets["boxes"][:,3] = torch.min(targets["boxes"][:,3], height_vector)
+            
+            transformed = self.transform(image=  image_np, 
+                                         bboxes = targets["boxes"], 
+                                         bounding_box_labels = targets['labels'])
+            image = transformed['image']
             # Transform the boxes to Tensors, because they are retrieved as list of tuples
             targets["boxes"] = Tensor(transformed['bboxes'])
+            
+        else:
+            # If there was no transform, we need to transform the image to tensor (C,H,W)
+            image = pil_to_tensor(pil_image) # This is a Tensor now of shape (C,H,W)
         
         return image, targets
 
@@ -188,13 +215,16 @@ class BasketballDataset(Dataset):
         return images, boxes, labels
 
 
-def load_data(folder_name: str, dataset_type: str = 'voc'):
+def load_data(folder_name: str, train_transform: A.Compose = None, dataset_type: str = 'voc'):
     """Load the dataset from specified folder
 
     Parameters
     ----------
     folder_name : str
-        Path to root directory containing the dataset    
+        Path to root directory containing the dataset
+    train_transform: A.Compose object
+        Comes from Albumentations
+    dataset_type: 'voc'
 
     Returns
     -------
@@ -229,7 +259,7 @@ def load_data(folder_name: str, dataset_type: str = 'voc'):
             test_ann_file), "No annotations file in test folder"
 
     # Load data
-    train_dataset = BasketballDataset(root_dir=folder_name, image_set='train')
+    train_dataset = BasketballDataset(root_dir=folder_name, transform=train_transform, image_set='train')
     val_dataset = BasketballDataset(root_dir=folder_name, image_set='valid')
     test_dataset = BasketballDataset(root_dir=folder_name, image_set='test')
 
