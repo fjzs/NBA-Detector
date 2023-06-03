@@ -60,12 +60,15 @@ def get_player_team_dataset(path: str, annotations_path: str = ''):
             ci, l = item
             for im, label in zip(ci, l):
                 cropped_images.append(im[0])
-                labels.append(label)
+                labels.append(label[0][0])
     return cropped_images, labels
 
 
-download_dataset_from_roboflow(format = 'coco', version_id = 8)
-cropped_images, labels = get_player_team_dataset('/NBA-Player-Detector-8/train')
+dataset_path: str = 'NBA-Player-Detector-8'
+if dataset_path not in os.listdir():
+    download_dataset_from_roboflow(format='coco', version_id=8)
+cropped_images, labels = get_player_team_dataset(
+    os.path.join(dataset_path, 'train'))
 for c, l in zip(cropped_images, labels):
     plt.imshow(c)
     print(l)
