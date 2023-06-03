@@ -1,18 +1,18 @@
 train:
-  dataset_path: "./../Datasets/v4"
-  trainable_layers: 5 # 0 all frozen, 5 all non-frozen
-  epochs: 30
+  dataset_path: "./../Datasets/v1"
+  trainable_layers: 1 # 0 all frozen, 5 all non-frozen
+  epochs: 2
   batch_size: 4
   model_name: "retinanet"
-  save_model_as: "retina_v4_30e_fullAug"
+  save_model_as: "testing_delete" # dont include extension in this value
 
 # put the probability to incorporate each transformation.
 # Only 1 transformation is going to be picked (at random) for any example
 # if there are multiple, the numbers are going to be 
 # weights.
-transformations: 
-  brightness: 1
-  contrast: 1
+transformations:
+  one_of_probability: 0.5 # prob of using one of the transformations below
+  brightness_contrast: 1
   defocus: 1
   equalize: 1
   horizontal_flip: 1
