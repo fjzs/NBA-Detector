@@ -64,6 +64,7 @@ def get_player_team_dataset(path: str, annotations_path: str = ''):
     return cropped_images, labels
 
 
+"""
 dataset_path: str = 'NBA-Player-Detector-8'
 if dataset_path not in os.listdir():
     download_dataset_from_roboflow(format='coco', version_id=8)
@@ -73,3 +74,4 @@ for c, l in zip(cropped_images, labels):
     plt.imshow(c)
     print(l)
     plt.show()
+"""
