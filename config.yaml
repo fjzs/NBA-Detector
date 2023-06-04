@@ -1,8 +1,8 @@
 train:
   dataset_path: "./../Datasets/v1"
   trainable_layers: 1 # 0 all frozen, 5 all non-frozen
-  epochs: 2
-  batch_size: 4
+  epochs: 1
+  batch_size: 2
   model_name: "retinanet"
   save_model_as: "testing_delete" # dont include extension in this value
 

@@ -36,7 +36,7 @@ def train_one_epoch(
     model = model.to(device)
     model.train()
 
-    print_freq = 4
+    #print_freq = 4
     logger_list = defaultdict(list) # for each key provides a list of values
     for i, (images, labels) in enumerate(trainloader):
         images = list(image.to(device) for image in images)
