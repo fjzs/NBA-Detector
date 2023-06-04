@@ -7,9 +7,10 @@ from src.nba_detector.create_model import get_model
 from src.nba_detector.dataset import load_data
 from src.nba_detector.train_model import collate_fn
 from src.nba_detector.transformations import get_transformation
+from src.nba_detector.evaluate import evaluate_dataloader
 
 
-def apply(model, dataloader, folder_to_save, split):
+def draw_and_save_boxes(model, dataloader, folder_to_save, split):
     """Applies the error analysis function to a particular dataloader and saves the output in that folder
 
     Args:
@@ -61,6 +62,42 @@ def apply(model, dataloader, folder_to_save, split):
             else:
                 print(f"\tWarning: image {image_path} was not saved!")
             id += 1
+
+
+def compute_metrics(model, dataloader, folder_to_save, split):
+    """Compute the metrics of this model in this dataloader
+
+    Args:
+        model: 
+        dataloader: 
+        folder_to_save: 
+        split: 
+    """
+    assert split in ["train", "val", "test"]
+
+    if not os.path.exists(folder_to_save):
+        os.makedirs(folder_to_save)
+        print(f"Folder created: {folder_to_save}")
+
+    split_folder = os.path.join(folder_to_save, split)
+    if not os.path.exists(split_folder):
+        os.makedirs(split_folder)
+        print(f"Folder created: {split_folder}")
+    
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model = model.to(device)
+
+    # Now compute the metrics
+    metrics = evaluate_dataloader(model, dataloader, device)
+
+    # Now save the dictionary in a text file
+    filepath = os.path.join(split_folder, split + '_metrics.txt')
+    with open(filepath,'w') as data: 
+        data.write(str(metrics))
+        print(f"metrics saved to: {filepath}")
+
+
+
 
 
 def draw_gt_pred_boxes(image: torch.Tensor, gt: torch.Tensor, pred: torch.Tensor, MIN_PRED_SCORE=0.5):
@@ -233,6 +270,7 @@ def main():
     APPLY_TO_TEST = config['apply_to_test']
     FOLDER_NAME = config['folder_name']
     USE_TRANSFORMATION = config['transformation']
+    COMPUTE_METRICS = config['compute_metrics']
     #-------------------------------#
     
     # Load Model
@@ -257,13 +295,19 @@ def main():
 
     if APPLY_TO_TRAIN:
         print(f"\nApplying to train...")
-        apply(model, trainloader, FOLDER_NAME, "train")
+        draw_and_save_boxes(model, trainloader, FOLDER_NAME, "train")
+        if COMPUTE_METRICS:
+            compute_metrics(model, trainloader, FOLDER_NAME, "train")
     if APPLY_TO_VALID:
         print(f"\nApplying to val...")
-        apply(model, valloader, FOLDER_NAME, "val")
+        draw_and_save_boxes(model, valloader, FOLDER_NAME, "val")
+        if COMPUTE_METRICS:
+            compute_metrics(model, valloader, FOLDER_NAME, "val")
     if APPLY_TO_TEST:
         print(f"\nApplying to test...")
-        apply(model, testloader, FOLDER_NAME, "test")
+        draw_and_save_boxes(model, testloader, FOLDER_NAME, "test")
+        if COMPUTE_METRICS:
+            compute_metrics(model, testloader, FOLDER_NAME, "test")
     print("\nAnalysis Done!")
 
 

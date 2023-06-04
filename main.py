@@ -2,7 +2,6 @@ from src.nba_detector.train_model import train
 from src.nba_detector.create_model import get_model
 from src.nba_detector.dataset import load_data
 from src.nba_detector.transformations import get_transformation
-import matplotlib.pyplot as plt
 import yaml
 
 
@@ -10,36 +9,36 @@ def main():
     #--------- Config -------------#
     config_file = './config.yaml'
     with open(config_file) as cf_file:
-        config = yaml.safe_load(cf_file.read())['train']
+        config = yaml.safe_load(cf_file.read())
         print(f"\nConfig file is:\n{config}\n")
 
-    DATASET_PATH = config['dataset_path']
-    TRAINABLE_LAYERS = config['trainable_layers']
-    MODEL_NAME = config['model_name']
+    # Train configurations
+    DATASET_PATH = config['train']['dataset_path']
+    TRAINABLE_LAYERS = config['train']['trainable_layers']
+    MODEL_NAME = config['train']['model_name']
     #-------------------------------#
 
     # Initialize wandb
-    if config['use_wandb'] == True:
+    if config['train']['use_wandb'] == True:
         import wandb
         wandb.init(
             project="nba-detector",
-            entity=config['wandb_entity'],
+            entity=config['train']['wandb_entity'],
             config=config,
         )
 
     print("Loading dataset...")
+    # transformations configurations
     transformation = None
-    if config['use_transformations']:
-        with open(config_file) as cf_file:
-            config_transformation = yaml.safe_load(cf_file.read())['transformations']
-        transformation = get_transformation(config_transformation)
+    if config['train']['use_transformations']:
+        transformation = get_transformation(config['transformations'])
     trainset, valset, testset = load_data(DATASET_PATH, train_transform=transformation)
 
     print("Building model...")
     model = get_model(MODEL_NAME, trainable_backbone_layers=TRAINABLE_LAYERS)
 
     print("Training model...")
-    logs = train(model, trainset, valset, config)
+    logs = train(model, trainset, valset, config['train'])
 
 
 if __name__ == '__main__':

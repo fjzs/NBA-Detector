@@ -131,3 +131,11 @@ dmypy.json
 # Dataset
 NBA-Player-Detector-1
 .vscode/settings.json
+
+# Model Checkpoints, logs and misc
+*.pt
+*.pth
+*.bak
+*.DS_Store
+wandb/
+*.csv

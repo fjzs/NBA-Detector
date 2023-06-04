@@ -79,6 +79,9 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
         valset, batch_size=config['batch_size'], shuffle=False, num_workers=2, drop_last=False,
         collate_fn=collate_fn
     )
+    print("Num training samples:", len(trainset))
+    print("Num validation samples:", len(valset))
+    print("Steps per Epoch:", len(trainloader))
 
     # Import wandb
     if config['use_wandb']: import wandb
@@ -114,7 +117,9 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
             torch.save(model.state_dict(), config['save_model_as'] + "_best_val_map.pt")
 
     # Save model checkpoint
-    # TODO: pass checkpoint path as cfg parameter.
     torch.save(model.state_dict(), config['save_model_as'] + ".pt")
+    # # Save checkpoint using wandb
+    # if config['use_wandb']:
+    #     wandb.save(config['save_model_as'] + ".pt")
     print("*** End of training")
     return logger

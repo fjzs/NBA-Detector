@@ -14,9 +14,9 @@ train:
 # Only 1 transformation is going to be picked (at random) for any example
 # if there are multiple, the numbers are going to be 
 # weights.
-transformations: 
-  brightness: 1
-  contrast: 1
+transformations:
+  one_of_probability: 0.5 # prob of using one of the transformations below
+  brightness_contrast: 1
   defocus: 1
   equalize: 1
   horizontal_flip: 1
@@ -28,9 +28,10 @@ transformations:
 error_analysis:
   model_path: "./../retina_v4_30e_fullAug.pth"
   model_name: "retinanet"
-  dataset_path: "./../Datasets/v4"
+  dataset_path: "/Users/aayushmaanjain/Documents/UCSD/spring23/cse252d/project/NBA-Player-Detector"
   apply_to_train: True
   apply_to_valid: True
   apply_to_test: True
   folder_name: 'Analysis_Retina'
   transformation: True # True if to use it in training dataloader
+  compute_metrics: True

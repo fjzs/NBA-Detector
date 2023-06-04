@@ -24,12 +24,9 @@ def get_transformation(transformations: dict, format:str = "pascal_voc") -> A.Co
     if 'horizontal_flip' in transformations:
         prob = transformations['horizontal_flip']
         transformation_list.append(A.HorizontalFlip(p=prob))
-    if 'brightness' in transformations:
-        prob = transformations['brightness']
-        transformation_list.append(A.RandomBrightness(p=prob))
-    if 'contrast' in transformations:
-        prob = transformations['contrast']
-        transformation_list.append(A.RandomContrast(p=prob))
+    if 'brightness_contrast' in transformations:
+        prob = transformations['brightness_contrast']
+        transformation_list.append(A.RandomBrightnessContrast(p=prob, brightness_limit=0.3, contrast_limit=0.3))
     if 'hue_saturation_value' in transformations:
         prob = transformations['hue_saturation_value']
         transformation_list.append(A.HueSaturationValue(p=prob))
@@ -49,16 +46,18 @@ def get_transformation(transformations: dict, format:str = "pascal_voc") -> A.Co
         prob = transformations['rgbshift']
         transformation_list.append(A.RGBShift(p=prob))
     
+    ONE_OF_PROBABILITY = transformations['one_of_probability']
+    assert 0 <= ONE_OF_PROBABILITY <= 1
+
     transformation = A.Compose(
         [
-            A.OneOf(transformation_list, p=0.5),
+            A.OneOf(transformation_list, p=ONE_OF_PROBABILITY),
             ToTensorV2() # this always goes in the end
         ],
         bbox_params = A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels'])
     )
     
     return transformation
-
 
 """
 def show(image, target, image_aug, target_aug):    
@@ -84,16 +83,17 @@ def show(image, target, image_aug, target_aug):
     # Plot the images
     plt.subplot(1, 2, 1)
     plt.imshow(annotated_image)
+    plt.axis('off')
     plt.title('Original Image')
     plt.subplot(1, 2, 2)
     plt.imshow(annotated_image_aug)
+    plt.axis('off')
     plt.title('Augmented image')
 
     # Show the plot
     plt.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.05)
     plt.margins(0,0)
-    plt.show()
-    
+    plt.show()    
 
 
 if __name__ == "__main__":
@@ -131,4 +131,4 @@ if __name__ == "__main__":
         image, targets = train_dataset[i]
         image_aug, targets_aug = train_dataset_aug[i]        
         show(image, targets, image_aug, targets_aug) # run in debug to show the plot
-"""        
+"""
