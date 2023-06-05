@@ -105,7 +105,7 @@ class BasketballDataset(Dataset):
 
         if self.transform:
             # Albumentations expects np.ndarray of shape (H,W,C)
-            image_np = np.asarray(pil_image) # This is a numpy array of shape (H, W, C)
+            image_np = np.array(pil_image) # This is a numpy array of shape (H, W, C)
             # the parameter 'bounding_box_labels' in self.transform has to have the same name as when defined in
             # the compose function. For example:
             #transformation = A.Compose([
