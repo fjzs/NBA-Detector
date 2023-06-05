@@ -70,13 +70,23 @@ def train_one_epoch(
     return logger
 
 
-def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: torch.utils.data.Dataset, config: dict):
+def train(
+        model: torch.nn.Module,
+        trainset: torch.utils.data.Dataset,
+        valset: torch.utils.data.Dataset,
+        testset: torch.utils.data.Dataset,
+        config: dict
+    ):
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=config['batch_size'], shuffle=True, num_workers=2, drop_last=True,
         collate_fn=collate_fn
     )
     valloader = torch.utils.data.DataLoader(
         valset, batch_size=config['batch_size'], shuffle=False, num_workers=2, drop_last=False,
+        collate_fn=collate_fn
+    )
+    testloader = torch.utils.data.DataLoader(
+        testset, batch_size=config['batch_size'], shuffle=False, num_workers=2, drop_last=False,
         collate_fn=collate_fn
     )
     print("Num training samples:", len(trainset))
@@ -115,6 +125,12 @@ def train(model: torch.nn.Module, trainset: torch.utils.data.Dataset, valset: to
         if epoch_logs["val/map"] > best_val_map:
             best_val_map = epoch_logs["val/map"]
             torch.save(model.state_dict(), config['save_model_as'] + "_best_val_map.pt")
+
+    # Evaluate on Test set
+    test_metrics = evaluate_dataloader(model, testloader, device)
+    logger["test/map"] = test_metrics["map"]
+    if config['use_wandb']:
+        wandb.log({"test/map": logger["test/map"]})
 
     # Save model checkpoint
     torch.save(model.state_dict(), config['save_model_as'] + ".pt")

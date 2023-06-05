@@ -45,7 +45,7 @@ def main():
     model = get_model(MODEL_NAME, trainable_backbone_layers=TRAINABLE_LAYERS)
 
     print("Training model...")
-    logs = train(model, trainset, valset, config['train'])
+    logs = train(model, trainset, valset, testset, config['train'])
 
 
 if __name__ == '__main__':
