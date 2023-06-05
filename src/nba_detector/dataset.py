@@ -27,7 +27,7 @@ def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> 
         """
     assert type(
         version_id) == int, f"version_id is not int, it is {version_id}"
-    assert 1 <= version_id <= 8, f"version_id has to be >=1 and <=8, it is {version_id}"
+    assert 1 <= version_id <= 15, f"version_id has to be >=1 and <=15, it is {version_id}"
 
     rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project = rf.workspace(
