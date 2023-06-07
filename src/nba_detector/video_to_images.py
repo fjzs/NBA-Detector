@@ -7,6 +7,9 @@ def generate_sample_frames(folder_path: str, file_extension:str, number_frames:i
     Given a folder_path and a file_extension I generate a random set of number_frames images
     of the videos in that folder. Use this website (for example) to download the video
     https://ssyoutube.com/en79/youtube-video-downloader
+    https://10downloader.com/en/69/youtube-to-mp4-converter
+    https://tomp3.cc/enw85dt/youtube-downloader  
+
     :param folder_path:
     :param file_extension:
     :param number_frames:
@@ -51,7 +54,7 @@ def generate_sample_frames(folder_path: str, file_extension:str, number_frames:i
 
 if __name__ == "__main__":
     folder = "..\\NBA-videos"
-    files = ["v10"]
+    files = ["v11"] # put the list of name of videos to convert, all of them should end in .mp4
     frames_per_video = 50
     for f in files:
         file_and_extension = f + ".mp4"

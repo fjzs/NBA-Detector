@@ -59,7 +59,7 @@ def get_transformation(transformations: dict, format:str = "pascal_voc") -> A.Co
     
     return transformation
 
-"""
+
 def show(image, target, image_aug, target_aug):    
 
     if isinstance(image, PIL.Image.Image):
@@ -131,4 +131,4 @@ if __name__ == "__main__":
         image, targets = train_dataset[i]
         image_aug, targets_aug = train_dataset_aug[i]        
         show(image, targets, image_aug, targets_aug) # run in debug to show the plot
-"""
+

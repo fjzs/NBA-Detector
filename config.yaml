@@ -22,12 +22,12 @@ transformations:
   rgbshift: 1
 
 error_analysis:
-  model_path: "./../m_v4_30e_9augs_Adam.pth"
-  model_name: "fasterrcnn" # 'fasterrcnn' or 'retinanet'
-  dataset_path: "./../Datasets/v6"
+  model_path: "./../retina_v4_30e_fullAug.pth"
+  model_name: "retinanet" # 'fasterrcnn' or 'retinanet'
+  dataset_path: "./NBA-Player-Detector-1"
   apply_to_train: False
-  apply_to_valid: True
+  apply_to_valid: False
   apply_to_test: True
-  folder_name: './../FasterRCNN'
+  folder_name: './../TestingAnalysis' # will make a new folder if not existant
   transformation: False # True if to use it in training dataloader
   compute_metrics: True
