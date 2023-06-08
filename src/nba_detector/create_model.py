@@ -33,7 +33,7 @@ def get_model(model_name:str = "fasterrcnn", num_classes:int = 4, trainable_back
     if model_name == "fasterrcnn":
         model = get_model_fasterrcnn(num_classes, trainable_backbone_layers)
     elif model_name == "retinanet":
-        model = get_model_retinanet(num_classes)
+        model = get_model_retinanet(num_classes, trainable_backbone_layers)
     else:
         raise ValueError(f"model name {model_name} not recognized")
     

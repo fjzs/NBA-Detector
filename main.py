@@ -1,6 +1,7 @@
 from src.nba_detector.train_model import train
 from src.nba_detector.create_model import get_model
 from src.nba_detector.dataset import load_data
+from src.nba_detector.transformations import get_transformation
 import pandas as pd
 import yaml
 
@@ -9,19 +10,23 @@ def main():
     #--------- Config -------------#
     config_file = './config.yaml'
     with open(config_file) as cf_file:
-        config = yaml.safe_load(cf_file.read())['train']
+        config = yaml.safe_load(cf_file.read())
         print(f"\nConfig file is:\n{config}\n")
 
-    DATASET_PATH = config['dataset_path']
-    TRAINABLE_LAYERS = config['trainable_layers']
-    NUM_EPOCHS = config['epochs']
-    BATCH_SIZE = config['batch_size']    
-    MODEL_NAME = config['model_name']
-    MODEL_SAVE_AS = config['save_model_as']
+    # Train configurations
+    DATASET_PATH = config['train']['dataset_path']
+    TRAINABLE_LAYERS = config['train']['trainable_layers']
+    NUM_EPOCHS = config['train']['epochs']
+    BATCH_SIZE = config['train']['batch_size']    
+    MODEL_NAME = config['train']['model_name']
+    MODEL_SAVE_AS = config['train']['save_model_as']
+
+    # transformations configurations
+    transformation = get_transformation(config['transformations'])
     #-------------------------------#
 
     print("Loading dataset...")
-    trainset, valset, testset = load_data(DATASET_PATH)
+    trainset, valset, testset = load_data(DATASET_PATH, train_transform=transformation)
 
     print("Building model...")
     model = get_model(MODEL_NAME, trainable_backbone_layers=TRAINABLE_LAYERS)

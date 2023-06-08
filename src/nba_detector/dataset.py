@@ -111,8 +111,10 @@ class BasketballDataset(Dataset):
 
         if self.transform:
             # Albumentations expects np.ndarray of shape (H,W,C)
-            # This is a numpy array of shape (H, W, C)
-            image_np = np.asarray(pil_image)
+            #image_np = np.asarray(pil_image) # This is a numpy array of shape (H, W, C) --> this yields a warning
+            # https://github.com/pytorch/vision/issues/2194
+            image_np = np.array(pil_image) # This does not yield a warning and has the same shape
+            
             # the parameter 'bounding_box_labels' in self.transform has to have the same name as when defined in
             # the compose function. For example:
             # transformation = A.Compose([
@@ -142,6 +144,7 @@ class BasketballDataset(Dataset):
                                          bboxes=targets["boxes"],
                                          bounding_box_labels=targets['labels'])
             image = transformed['image']
+
             # Transform the boxes to Tensors, because they are retrieved as list of tuples
             targets["boxes"] = Tensor(transformed['bboxes'])
 
