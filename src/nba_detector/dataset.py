@@ -13,7 +13,7 @@ from torchvision.transforms.functional import pil_to_tensor
 from typing import Tuple, List
 
 
-def download_dataset_from_roboflow(format: str = 'voc', version_id: int = -1) -> None:
+def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> None:
     """Download the dataset from Roboflow website using API call
 
         Parameters
