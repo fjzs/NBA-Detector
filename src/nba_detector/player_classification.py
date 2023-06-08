@@ -1,5 +1,4 @@
 import cv2
-import os
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
@@ -31,26 +30,6 @@ def knn_classification(images: list, labels: list, k: int = 5):
     # Fit model
     knn.fit(gray_images, labels)
     return knn
-
-
-def confusion_matrix(test_labels, team_predictions):
-    from sklearn.metrics import confusion_matrix
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-
-    cm = confusion_matrix(test_labels, team_predictions)
-    plt.figure(figsize=(8, 6))
-    classes_test = ['GSW', 'MEM', 'MTW', 'SAS']
-    classes_pred = ['GSW', 'MEM', 'MTW', 'SAS']
-    sns.heatmap(cm, annot=True, cmap='Blues', xticklabels=classes_test,
-                yticklabels=classes_pred)
-    plt.xlabel("Predicted Labels")
-    plt.ylabel("True Labels")
-    plt.title("Confusion Matrix")
-    plt.xticks(ticks=np.arange(len(classes_test))+0.5, labels=classes_test)
-    plt.yticks(ticks=np.arange(len(classes_pred))+0.5, labels=classes_pred)
-
-    plt.show()
 
 
 """

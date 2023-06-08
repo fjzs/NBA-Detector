@@ -13,7 +13,7 @@ from torchvision.transforms.functional import pil_to_tensor
 from typing import Tuple, List
 
 
-def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> None:
+def download_dataset_from_roboflow(format: str = 'voc', version_id: int = -1) -> None:
     """Download the dataset from Roboflow website using API call
 
         Parameters
@@ -27,11 +27,16 @@ def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> 
         """
     assert type(
         version_id) == int, f"version_id is not int, it is {version_id}"
-    assert 1 <= version_id <= 15, f"version_id has to be >=1 and <=15, it is {version_id}"
-
-    rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project = rf.workspace(
         "francisco-zenteno-uryfd").project("nba-player-detector")
+
+    version_list: list[int] = sorted([int(version.version.split(
+        '/')[-1]) for version in project.versions()])
+    assert version_list.__len__() > 0, "No versions found for the project"
+    version_id = version_list[-1]
+    assert version_id in version_list, f"Invalid version id {version_id}. Valid versions are {version_list}"
+
+    rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project.version(version_id).download(format)
 
 

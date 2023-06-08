@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 from numpy import uint8
 import os
 
-from dataset import download_dataset_from_roboflow
-
 
 class PlayerDataset(Dataset):
     def __init__(self, dataset_path: str, annotations_path: str, player_category_id: int, transform: transforms = None):
