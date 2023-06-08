@@ -34,7 +34,7 @@ def download_dataset_from_roboflow(format: str = 'voc', version_id: int = -1) ->
     version_list: list[int] = sorted([int(version.version.split(
         '/')[-1]) for version in project.versions()])
     assert version_list.__len__() > 0, "No versions found for the project"
-    version_id = version_list[-1]
+    version_id = version_list[-1] if version_id == -1 else version_id
     assert version_id in version_list, f"Invalid version id {version_id}. Valid versions are {version_list}"
 
     project.version(version_id).download(format)
