@@ -27,6 +27,7 @@ def download_dataset_from_roboflow(format: str = 'voc', version_id: int = -1) ->
         """
     assert type(
         version_id) == int, f"version_id is not int, it is {version_id}"
+    rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project = rf.workspace(
         "francisco-zenteno-uryfd").project("nba-player-detector")
 
@@ -36,7 +37,6 @@ def download_dataset_from_roboflow(format: str = 'voc', version_id: int = -1) ->
     version_id = version_list[-1]
     assert version_id in version_list, f"Invalid version id {version_id}. Valid versions are {version_list}"
 
-    rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
     project.version(version_id).download(format)
 
 
