@@ -13,7 +13,6 @@ from torchvision.transforms.functional import pil_to_tensor
 from typing import Tuple, List
 
 
-
 def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> None:
     """Download the dataset from Roboflow website using API call
 
@@ -26,11 +25,18 @@ def download_dataset_from_roboflow(format: str = 'voc', version_id: int = 1) -> 
         -------
         dataset : Dataset
         """
-    assert type(version_id) == int, f"version_id is not int, it is {version_id}"
-    assert 1 <= version_id <= 3, f"version_id has to be >=1 and <=3, it is {version_id}"
-
+    assert type(
+        version_id) == int, f"version_id is not int, it is {version_id}"
     rf = Roboflow(api_key='NASBxoDeYCFInyN1wXD2')
-    project = rf.workspace("francisco-zenteno-uryfd").project("nba-player-detector")
+    project = rf.workspace(
+        "francisco-zenteno-uryfd").project("nba-player-detector")
+
+    version_list: list[int] = sorted([int(version.version.split(
+        '/')[-1]) for version in project.versions()])
+    assert version_list.__len__() > 0, "No versions found for the project"
+    version_id = version_list[-1] if version_id == -1 else version_id
+    assert version_id in version_list, f"Invalid version id {version_id}. Valid versions are {version_list}"
+
     project.version(version_id).download(format)
 
 
@@ -45,7 +51,7 @@ class BasketballDataset(Dataset):
     # Labels to map detection objects to numbers
     LABEL_MAP: defaultdict(int) = {'ball': 1, 'player': 2, 'rim': 3}
 
-    def __init__(self, root_dir: str, transform: A.Compose=None, image_set: str = 'train') -> None:
+    def __init__(self, root_dir: str, transform: A.Compose = None, image_set: str = 'train') -> None:
         super().__init__()
         self.root_dir = root_dir
         self.transform = transform
@@ -100,9 +106,9 @@ class BasketballDataset(Dataset):
 
         img_path = self.image_ids[index] + BasketballDataset.JPG_EXTENSION
         ann_path = self.image_ids[index] + BasketballDataset.XML_EXTENSION
-        pil_image = Image.open(img_path).convert('RGB') # This is PIL Image
+        pil_image = Image.open(img_path).convert('RGB')  # This is PIL Image
         targets = self._get_annotations(ann_path)
-        
+
         if self.transform:
             # Albumentations expects np.ndarray of shape (H,W,C)
             #image_np = np.asarray(pil_image) # This is a numpy array of shape (H, W, C) --> this yields a warning
@@ -111,12 +117,11 @@ class BasketballDataset(Dataset):
             
             # the parameter 'bounding_box_labels' in self.transform has to have the same name as when defined in
             # the compose function. For example:
-            #transformation = A.Compose([
+            # transformation = A.Compose([
             #        A.HorizontalFlip(p=1),
             #        ToTensorV2()
-            #    ], 
+            #    ],
             #    bbox_params=A.BboxParams(format='pascal_voc', label_fields=['bounding_box_labels']))
-            
 
             # There is a bug in the bounding boxes, some of them come with an x_max > WIDTH or
             # y_max > HEIGHT, so we are going to trim those bounding boxes here for simplicity
@@ -126,25 +131,28 @@ class BasketballDataset(Dataset):
                 height_vector = torch.ones(number_of_boxes) * HEIGHT
                 width_vector = torch.ones(number_of_boxes) * WIDTH
                 # Boxes come in this format: [x_min, y_min, x_max, y_max]
-                
+
                 # Replace x_max if it is > WIDTH
-                targets["boxes"][:,2] = torch.min(targets["boxes"][:,2], width_vector)
-                
+                targets["boxes"][:, 2] = torch.min(
+                    targets["boxes"][:, 2], width_vector)
+
                 # Replace y_max if it is > HEIGHT
-                targets["boxes"][:,3] = torch.min(targets["boxes"][:,3], height_vector)
-            
-            transformed = self.transform(image=  image_np, 
-                                         bboxes = targets["boxes"], 
-                                         bounding_box_labels = targets['labels'])
+                targets["boxes"][:, 3] = torch.min(
+                    targets["boxes"][:, 3], height_vector)
+
+            transformed = self.transform(image=image_np,
+                                         bboxes=targets["boxes"],
+                                         bounding_box_labels=targets['labels'])
             image = transformed['image']
 
             # Transform the boxes to Tensors, because they are retrieved as list of tuples
             targets["boxes"] = Tensor(transformed['bboxes'])
-            
+
         else:
             # If there was no transform, we need to transform the image to tensor (C,H,W)
-            image = pil_to_tensor(pil_image) # This is a Tensor now of shape (C,H,W)
-        
+            # This is a Tensor now of shape (C,H,W)
+            image = pil_to_tensor(pil_image)
+
         return image, targets
 
     def _get_annotations(self, xml_file_path: str) -> defaultdict[Tensor]:
@@ -192,6 +200,33 @@ class BasketballDataset(Dataset):
             BasketballDataset.XML_EXTENSION)
         return targets
 
+    def collate_fn(self, batch):
+        """
+        Since each image may have a different number of objects, we need a collate function (to be passed to the DataLoader).
+
+        This describes how to combine these tensors of different sizes. We use lists.
+
+        Note: this need not be defined in this Class, can be standalone.
+
+        :param batch: an iterable of N sets from __getitem__()
+        :return: a tensor of images, lists of varying-size tensors of bounding boxes, labels, and difficulties
+        """
+
+        images = list()
+        boxes = list()
+        labels = list()
+
+        for b in batch:  # b is a tuple
+            img = b[0]
+            target_dict = b[1]
+            images.append(img)
+            boxes.append(target_dict["boxes"])
+            labels.append(target_dict["labels"])
+
+        images = torch.stack(images, dim=0)
+
+        return images, boxes, labels
+
 
 def load_data(folder_name: str, train_transform: A.Compose = None, dataset_type: str = 'voc'):
     """Load the dataset from specified folder
@@ -237,7 +272,8 @@ def load_data(folder_name: str, train_transform: A.Compose = None, dataset_type:
             test_ann_file), "No annotations file in test folder"
 
     # Load data
-    train_dataset = BasketballDataset(root_dir=folder_name, transform=train_transform, image_set='train')
+    train_dataset = BasketballDataset(
+        root_dir=folder_name, transform=train_transform, image_set='train')
     val_dataset = BasketballDataset(root_dir=folder_name, image_set='valid')
     test_dataset = BasketballDataset(root_dir=folder_name, image_set='test')
 
