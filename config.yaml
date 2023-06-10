@@ -1,5 +1,5 @@
 train:
-  dataset_path: ".//Datasets/v1"
+  dataset_path: "./NBA-Player-Detector-1"
   trainable_layers: 3 # 0 all frozen, 5 all non-frozen
   epochs: 3
   batch_size: 2
