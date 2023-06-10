@@ -22,12 +22,12 @@ transformations:
   rgbshift: 1
 
 error_analysis:
-  model_path: "./../retinanet-model_best_val_map.pth"
+  model_path: "./testing_model.pth"
   model_name: "retinanet" # 'fasterrcnn' or 'retinanet'
   dataset_path: "./../Datasets/v11"
   apply_to_train: False
   apply_to_valid: False
   apply_to_test: True
-  folder_name: './../RetinaAnalysis' # will make a new folder if not existant
+  folder_name: './Analysis' # will make a new folder if not existant
   transformation: False # True if to use it in training dataloader
   compute_metrics: True
