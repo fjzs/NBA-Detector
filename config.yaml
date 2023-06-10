@@ -24,7 +24,7 @@ transformations:
 error_analysis:
   model_path: "./testing_model.pth"
   model_name: "retinanet" # 'fasterrcnn' or 'retinanet'
-  dataset_path: "./../Datasets/v11"
+  dataset_path: "./NBA-Player-Detector-1"
   apply_to_train: False
   apply_to_valid: False
   apply_to_test: True
