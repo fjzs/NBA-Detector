@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 # Dataset
-NBA-Player-Detector-1
+#NBA-Player-Detector-1
 .vscode/settings.json

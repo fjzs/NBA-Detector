@@ -1,6 +1,6 @@
 train:
   dataset_path: "./../Datasets/v1"
-  trainable_layers: 1 # 0 all frozen, 5 all non-frozen
+  trainable_layers: 3 # 0 all frozen, 5 all non-frozen
   epochs: 1
   batch_size: 2
   model_name: "retinanet"
@@ -11,23 +11,23 @@ train:
 # if there are multiple, the numbers are going to be 
 # weights.
 transformations:
-  one_of_probability: 0.5 # prob of using one of the transformations below
-  brightness_contrast: 1
-  defocus: 1
-  equalize: 1
-  horizontal_flip: 1
-  hue_saturation_value: 1
-  sharpen: 1
-  solarize: 1
+  one_of_probability: 1 # prob of using one of the transformations below
+  brightness_contrast: 0
+  defocus: 0
+  equalize: 0
+  horizontal_flip: 0
+  hue_saturation_value: 0
+  sharpen: 0
+  solarize: 0
   rgbshift: 1
 
 error_analysis:
-  model_path: "./../retina_v4_30e_fullAug.pth"
+  model_path: "./../retinanet-model_best_val_map.pth"
   model_name: "retinanet" # 'fasterrcnn' or 'retinanet'
-  dataset_path: "./NBA-Player-Detector-1"
+  dataset_path: "./../Datasets/v11"
   apply_to_train: False
   apply_to_valid: False
   apply_to_test: True
-  folder_name: './../TestingAnalysis' # will make a new folder if not existant
+  folder_name: './../RetinaAnalysis' # will make a new folder if not existant
   transformation: False # True if to use it in training dataloader
   compute_metrics: True

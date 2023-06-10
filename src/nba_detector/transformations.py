@@ -44,7 +44,7 @@ def get_transformation(transformations: dict, format:str = "pascal_voc") -> A.Co
         transformation_list.append(A.Equalize(p=prob))
     if 'rgbshift' in transformations:
         prob = transformations['rgbshift']
-        transformation_list.append(A.RGBShift(p=prob))
+        transformation_list.append(A.RGBShift(p=prob, r_shift_limit=50, g_shift_limit=50, b_shift_limit=50))
     
     ONE_OF_PROBABILITY = transformations['one_of_probability']
     assert 0 <= ONE_OF_PROBABILITY <= 1
