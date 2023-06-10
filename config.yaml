@@ -1,10 +1,10 @@
 train:
-  dataset_path: "./../Datasets/v1"
+  dataset_path: ".//Datasets/v1"
   trainable_layers: 3 # 0 all frozen, 5 all non-frozen
-  epochs: 1
+  epochs: 3
   batch_size: 2
-  model_name: "retinanet"
-  save_model_as: "testing_delete" # dont include extension in this value
+  model_name: "retinanet" # 'fasterrcnn' or 'retinanet'
+  save_model_as: "testing_model" # dont include extension in this value
 
 # put the probability to incorporate each transformation.
 # Only 1 transformation is going to be picked (at random) for any example
@@ -12,13 +12,13 @@ train:
 # weights.
 transformations:
   one_of_probability: 1 # prob of using one of the transformations below
-  brightness_contrast: 0
-  defocus: 0
-  equalize: 0
-  horizontal_flip: 0
-  hue_saturation_value: 0
-  sharpen: 0
-  solarize: 0
+  brightness_contrast: 1
+  defocus: 1
+  equalize: 1
+  horizontal_flip: 1
+  hue_saturation_value: 1
+  sharpen: 1
+  solarize: 1
   rgbshift: 1
 
 error_analysis:
